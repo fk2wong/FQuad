@@ -9,16 +9,23 @@
 #include <avr/io.h>
 
 #define F_CPU 16000000
-#include <util/delay.h>
+
 #include "Platform_FQuad.h"
-#include "PlatformGPIO.h"
+#include <util/delay.h>
 
 int main(void)
 {
-	PlatformGPIO_Configure( FQuadGPIO_TestLED, PlatformGPIOConfig_Output );
+	PlatformGPIO_InitAllGPIOs();
+	
+	PlatformGPIO_Configure( FQuadGPIO_PadX, PlatformGPIOConfig_Output );
+	PlatformGPIO_Configure( FQuadGPIO_PadSelect, PlatformGPIOConfig_Output );
+	
+	PlatformGPIO_Toggle( FQuadGPIO_PadX );
+	
     while(1)
     {
-		PlatformGPIO_Toggle( FQuadGPIO_TestLED );
+		PlatformGPIO_Toggle( FQuadGPIO_PadX );
+		PlatformGPIO_Toggle( FQuadGPIO_PadSelect );
 		_delay_ms( 1000 );
     }
 }
