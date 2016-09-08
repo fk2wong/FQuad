@@ -40,28 +40,28 @@
 #endif // USE_DEBUG_CODE
 
 #if USE_PRODUCTION_CODE
-#define require_quiet( assertation, label )           \
-	do                                                \
-	{                                                 \
-		if ( __builtin_expect( !assertation, false )) \
-		{                                             \
-			goto label;                               \
-		}                                             \
-	}                                                 \
+#define require_quiet( assertation, label )       \
+	do                                            \
+	{                                             \
+		if ( __builtin_expect( !assertation, 0 )) \
+		{                                         \
+			goto label;                           \
+		}                                         \
+	}                                             \
 	while ( 0 )
 #else
 #define require_quiet( err, label ) //TODO
 #endif // USE_DEBUG_CODE
 
 #if USE_PRODUCTION_CODE
-#define require_noerr_quiet( err, label )         \
-	do                                            \
-	{                                             \
-		if ( __builtin_expect( err != 0, false )) \
-		{                                         \
-			goto label;                           \
-		}                                         \
-	}                                             \
+#define require_noerr_quiet( err, label )     \
+	do                                        \
+	{                                         \
+		if ( __builtin_expect( err != 0, 0 )) \
+		{                                     \
+			goto label;                       \
+		}                                     \
+	}                                         \
 	while ( 0 )
 #else
 #define require_noerr_quiet( err, label ) //TODO

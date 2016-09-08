@@ -87,6 +87,8 @@
       <Value>../Platform/PlatformGPIO</Value>
       <Value>../Platform/PlatformStatus</Value>
       <Value>../Shared/require_macros</Value>
+      <Value>../Shared/FMemory</Value>
+      <Value>../Platform/PlatformRingBuffer</Value>
     </ListValues>
   </avrgcc.compiler.directories.IncludePaths>
   <avrgcc.compiler.optimization.level>Optimize (-O1)</avrgcc.compiler.optimization.level>
@@ -116,10 +118,28 @@
     <Compile Include="Platform\PlatformGPIO\PlatformGPIO.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="Platform\PlatformRingBuffer\PlatformRingBuffer.c">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="Platform\PlatformStatus\PlatformStatus.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="Platform\PlatformRingBuffer\PlatformRingBuffer.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Platform\PlatformUART\PlatformUART.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Platform\PlatformUART\PlatformUART.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="Platform\Platform_FQuad.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Shared\FMemory\FMemory.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Shared\FMemory\FMemory.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="Shared\require_macros\require_macros.h">
@@ -127,10 +147,13 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Platform\PlatformRingBuffer" />
+    <Folder Include="Platform\PlatformUART" />
     <Folder Include="Shared" />
     <Folder Include="Platform" />
     <Folder Include="Platform\PlatformStatus" />
     <Folder Include="Platform\PlatformGPIO" />
+    <Folder Include="Shared\FMemory" />
     <Folder Include="Shared\require_macros" />
   </ItemGroup>
   <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\Compiler.targets" />
