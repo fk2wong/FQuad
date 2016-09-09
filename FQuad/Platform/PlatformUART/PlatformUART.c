@@ -9,6 +9,7 @@
 #include "PlatformUART.h"
 #include "require_macros.h"
 #include <stdbool.h>
+#include <avr/interrupt.h>
 
 //===============//
 //    Defines    //
@@ -146,4 +147,16 @@ PlatformStatus PlatformUART_ReceiveBuffer( uint8_t* const outBuffer, size_t inRe
 	status = PlatformStatus_Success;
 exit:
 	return status;
+}
+
+ISR( USART_RX_vect )
+{	
+	// This should not execute unless a ring buffer was given
+	require_quiet( mRXRingBuffer, exit );
+	
+	// Push the RX byte into the ring buffer
+	PlatformRingBuffer_WriteByte( mRXRingBuffer, UDR0 );
+	
+exit:
+	reti();
 }

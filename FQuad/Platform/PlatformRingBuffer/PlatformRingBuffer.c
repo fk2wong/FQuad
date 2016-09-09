@@ -10,6 +10,10 @@
 #include "require_macros.h"
 #include "FUtilities.h"
 #include <string.h>
+#include <stdbool.h>
+#include <avr/interrupt.h>
+
+#define ARE_GLOBAL_INTERRUPTS_ENABLED ( SREG & ( 1 << SREG_I )) // TODO Move this to a different file so other modules can use it too
 
 struct PlatformRingBufferStruct
 {
@@ -61,6 +65,8 @@ PlatformStatus PlatformRingBuffer_WriteBuffer( PlatformRingBuffer *const inRingB
 	size_t sizeToCopy;
 	size_t sizeCopied;
 	
+	bool didDisableInterrupts = false;
+	
 	require_quiet( inRingBuffer, exit );
 	require_quiet( inData,       exit );
 	require_quiet( inDataLen,    exit );
@@ -69,6 +75,11 @@ PlatformStatus PlatformRingBuffer_WriteBuffer( PlatformRingBuffer *const inRingB
 	require_quiet( _PlatformRingBuffer_GetNumFreeBytes( inRingBuffer ) >= inDataLen, exit );
 	
 	// Disable Global Interrupts, if enabled
+	if ( ARE_GLOBAL_INTERRUPTS_ENABLED )
+	{
+		cli();
+		didDisableInterrupts = true;
+	}
 	
 	// Copy the data, no further than final byte slot in the ring buffer
 	sizeToCopy = MAX( inDataLen, inRingBuffer->bufferSize - inRingBuffer->headIndex + 1 );
@@ -86,16 +97,22 @@ PlatformStatus PlatformRingBuffer_WriteBuffer( PlatformRingBuffer *const inRingB
 	// Update the head index
 	_PlatformRingBuffer_UpdateHeadIndex( inRingBuffer, inDataLen );
 	
-	// Enable global interrupts, if we disabled them
-	
 	status = PlatformStatus_Success;
+	
 exit:
+	// Enable global interrupts, if we disabled them
+	if ( didDisableInterrupts )
+	{
+		sei();
+	}
+	
 	return status;
 }
 
 PlatformStatus PlatformRingBuffer_WriteByte( PlatformRingBuffer* const inRingBuffer, const uint8_t inData )
 {
 	PlatformStatus status = PlatformStatus_Failed;
+	bool didDisableInterrupts = false;
 		
 	require_quiet( inRingBuffer, exit );
 		
@@ -103,16 +120,26 @@ PlatformStatus PlatformRingBuffer_WriteByte( PlatformRingBuffer* const inRingBuf
 	require_quiet( _PlatformRingBuffer_GetNumFreeBytes( inRingBuffer ) > 0, exit );
 		
 	// Disable Global Interrupts, if enabled
+	if ( ARE_GLOBAL_INTERRUPTS_ENABLED )
+	{
+		cli();	
+		didDisableInterrupts = true;
+	}
 		
 	// Copy the data into the ring buffer
 	inRingBuffer->buffer[ inRingBuffer->headIndex ] = inData;
 	
 	_PlatformRingBuffer_UpdateHeadIndex( inRingBuffer, 1 );
 		
-	// Enable global interrupts, if we disabled them
-		
 	status = PlatformStatus_Success;
+	
 exit:
+	// Enable global interrupts, if we disabled them
+	if ( didDisableInterrupts )
+	{
+		sei();
+	}
+	
 	return status;
 }
 
@@ -124,12 +151,19 @@ PlatformStatus PlatformRingBuffer_ReadBuffer( PlatformRingBuffer *const inRingBu
 	PlatformStatus status = PlatformStatus_Failed;
 	size_t sizeToCopy;
 	
+	bool didDisableInterrupts = false;
+	
 	require_quiet( inRingBuffer,   exit );
 	require_quiet( outData,        exit );
 	require_quiet( inRequestedLen, exit );
 	require_quiet( outActualLen,   exit );
 	
-	// Disable global interrupts, if enabled
+	// Disable Global Interrupts, if enabled
+	if ( ARE_GLOBAL_INTERRUPTS_ENABLED )
+	{
+		cli();
+		didDisableInterrupts = true;
+	}
 	
 	// Copy the data to the outData buffer, either the requested amount or however much we can provide
 	sizeToCopy = MIN( inRequestedLen, _PlatformRingBuffer_GetNumUsedBytes( inRingBuffer ));
@@ -146,7 +180,14 @@ PlatformStatus PlatformRingBuffer_ReadBuffer( PlatformRingBuffer *const inRingBu
 	{
 		status = PlatformStatus_Success;
 	}
+	
 exit:
+	// Enable global interrupts if we disabled them
+	if ( didDisableInterrupts )
+	{
+		sei();
+	}
+	
 	return status;
 }
 
