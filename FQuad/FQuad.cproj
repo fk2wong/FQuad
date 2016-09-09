@@ -89,6 +89,7 @@
       <Value>../Shared/require_macros</Value>
       <Value>../Shared/FMemory</Value>
       <Value>../Platform/PlatformRingBuffer</Value>
+      <Value>../Shared/FUtilities</Value>
     </ListValues>
   </avrgcc.compiler.directories.IncludePaths>
   <avrgcc.compiler.optimization.level>Optimize (-O1)</avrgcc.compiler.optimization.level>
@@ -142,6 +143,9 @@
     <Compile Include="Shared\FMemory\FMemory.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="Shared\FUtilities\FUtilities.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="Shared\require_macros\require_macros.h">
       <SubType>compile</SubType>
     </Compile>
@@ -154,6 +158,7 @@
     <Folder Include="Platform\PlatformStatus" />
     <Folder Include="Platform\PlatformGPIO" />
     <Folder Include="Shared\FMemory" />
+    <Folder Include="Shared\FUtilities" />
     <Folder Include="Shared\require_macros" />
   </ItemGroup>
   <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\Compiler.targets" />

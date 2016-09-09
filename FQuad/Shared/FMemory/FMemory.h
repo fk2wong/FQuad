@@ -14,7 +14,7 @@
 
 // Public functions
 #define FMemoryAlloc( X )          malloc( X )
-#define FMemoryFreeAndNULLPtr( X ) _FMemoryFreeAndNULLPtr( X )
+#define FMemoryFreeAndNULLPtr( X ) _FMemoryFreeAndNULLPtr(( void** ) X )
 
 // Should not be called explicitly
 void _FMemoryFreeAndNULLPtr( void** ioDoublePtr );
