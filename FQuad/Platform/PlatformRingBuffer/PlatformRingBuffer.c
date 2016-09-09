@@ -55,7 +55,7 @@ exit:
 }
 
 
-PlatformStatus PlatformRingBuffer_Write( PlatformRingBuffer *const inRingBuffer, const uint8_t *const inData, size_t inDataLen )
+PlatformStatus PlatformRingBuffer_WriteBuffer( PlatformRingBuffer *const inRingBuffer, const uint8_t *const inData, size_t inDataLen )
 {
 	PlatformStatus status = PlatformStatus_Failed;
 	size_t sizeToCopy;
@@ -93,8 +93,31 @@ exit:
 	return status;
 }
 
-PlatformStatus PlatformRingBuffer_Read( PlatformRingBuffer *const inRingBuffer, 
-										uint8_t **const           outData, 
+PlatformStatus PlatformRingBuffer_WriteByte( PlatformRingBuffer* const inRingBuffer, const uint8_t inData )
+{
+	PlatformStatus status = PlatformStatus_Failed;
+		
+	require_quiet( inRingBuffer, exit );
+		
+	// Check we have enough room in the buffer
+	require_quiet( _PlatformRingBuffer_GetNumFreeBytes( inRingBuffer ) > 0, exit );
+		
+	// Disable Global Interrupts, if enabled
+		
+	// Copy the data into the ring buffer
+	inRingBuffer->buffer[ inRingBuffer->headIndex ] = inData;
+	
+	_PlatformRingBuffer_UpdateHeadIndex( inRingBuffer, 1 );
+		
+	// Enable global interrupts, if we disabled them
+		
+	status = PlatformStatus_Success;
+exit:
+	return status;
+}
+
+PlatformStatus PlatformRingBuffer_ReadBuffer( PlatformRingBuffer *const inRingBuffer, 
+										uint8_t *const           outData, 
 										const size_t              inRequestedLen, 
 										size_t *const             outActualLen )
 {

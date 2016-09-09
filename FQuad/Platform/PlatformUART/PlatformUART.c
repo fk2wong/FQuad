@@ -25,12 +25,14 @@
 
 #define PLATFORM_UART_DATA_REG_EMPTY    ( UCSR0A & ( 1 << UDRE0 ))
 
+#define PLATFORM_UART_RX_FIFO_SIZE      ( 3 )
+
 //==================================//
 //    Static Structs & Variables    //
 //==================================//
 
 static bool                mUARTIsInitialized;
-static PlatformRingBuffer* mRXBuffer;
+static PlatformRingBuffer* mRXRingBuffer;
 
 //===================================//
 //    Public Function Definitions    //
@@ -45,7 +47,7 @@ PlatformStatus PlatformUART_Init( uint32_t inBaudRate, PlatformRingBuffer *const
 	
 	if ( inOptionalRingBuffer )
 	{
-		mRXBuffer = inOptionalRingBuffer;
+		mRXRingBuffer = inOptionalRingBuffer;
 	}
 	
 	// TODO initialize the clocks/powersave bit for the UART?
@@ -70,6 +72,12 @@ PlatformStatus PlatformUART_Init( uint32_t inBaudRate, PlatformRingBuffer *const
 	// Enable the UART transmitter and receiver
 	UCSR0B = ( 1 << TXEN0 ) | ( 1 << RXEN0 );
 	
+	// If there is a ring buffer, then we will the RX Complete ISR to read the data into the ring buffer
+	if ( inOptionalRingBuffer )
+	{
+		UCSR0B |= ( 1 << RXCIE0 );
+	}
+	
 	mUARTIsInitialized = true;
 	
 	status = PlatformStatus_Success;
@@ -77,7 +85,7 @@ exit:
 	return status;
 }
 
-PlatformStatus PlatformUART_Transmit( uint8_t* inBuffer, size_t bufferLen )
+PlatformStatus PlatformUART_Transmit( uint8_t* inBuffer, size_t inBufferLen )
 {
 	PlatformStatus status = PlatformStatus_Failed;
 	
@@ -87,13 +95,52 @@ PlatformStatus PlatformUART_Transmit( uint8_t* inBuffer, size_t bufferLen )
 	require_quiet( PLATFORM_UART_DATA_REG_EMPTY, exit );
 	
 	// Send each byte in the buffer
-	for ( uint8_t i = 0; i < bufferLen; i++ )
+	for ( uint8_t i = 0; i < inBufferLen; i++ )
 	{
 		// Wait for the data register to be empty before sending it the next byte
 		while( !PLATFORM_UART_DATA_REG_EMPTY );
 		
 		// Place next byte into I/O data register
 		UDR0 = inBuffer[i];
+	}
+	
+	status = PlatformStatus_Success;
+exit:
+	return status;
+}
+
+PlatformStatus PlatformUART_ReceiveBuffer( uint8_t* const outBuffer, size_t inRequestedLen, size_t *const outActualLen )
+{
+	PlatformStatus status = PlatformStatus_Failed;
+	
+	require_quiet( outBuffer,       exit );
+	require_quiet( inRequestedLen, exit );
+	require_quiet( outActualLen,   exit );
+	
+	// If there is a ring buffer, then read data from it
+	if ( mRXRingBuffer )
+	{
+		status = PlatformRingBuffer_ReadBuffer( mRXRingBuffer, outBuffer, inRequestedLen, outActualLen );
+	}
+	// Otherwise read from the USART RX FIFO
+	else
+	{
+		// Cannot read more than the FIFO can hold
+		require_quiet( inRequestedLen <= PLATFORM_UART_RX_FIFO_SIZE, exit );
+		
+		*outActualLen = 0;
+		
+		// Get each byte from the Data Register, which will be updated with the next byte in the FIFO after read complete
+		for ( uint8_t i = 0; i < inRequestedLen; i++ )
+		{
+			// Make sure there is something to be read
+			require_quiet(( UCSR0A & ( 1 << RXC0 )), exit );
+			
+			// Copy it to the output buffer
+			outBuffer[i] = UDR0;
+			
+			( *outActualLen )++;
+		}
 	}
 	
 	status = PlatformStatus_Success;

@@ -20,13 +20,15 @@ typedef struct PlatformRingBufferStruct PlatformRingBuffer;
 
 PlatformRingBuffer * PlatformRingBuffer_Create( size_t inBufferSize );
 
-PlatformStatus PlatformRingBuffer_Write( PlatformRingBuffer *const inRingBuffer, 
-										 const uint8_t *const      inData, 
-										 size_t                    inDataLen );
+PlatformStatus PlatformRingBuffer_WriteBuffer( PlatformRingBuffer *const inRingBuffer, 
+											   const uint8_t *const      inData, 
+											   size_t                    inDataLen );
+										 
+PlatformStatus PlatformRingBuffer_WriteByte( PlatformRingBuffer* const inRingBuffer, const uint8_t inData );
 
-PlatformStatus PlatformRingBuffer_Read( PlatformRingBuffer *const inRingBuffer,
-										uint8_t **const           outData,
-										const size_t              inRequestedLen,
-										size_t *const             outActualLen );
+PlatformStatus PlatformRingBuffer_ReadBuffer( PlatformRingBuffer *const inRingBuffer,
+										      uint8_t *const           outData,
+										      const size_t              inRequestedLen,
+										      size_t *const             outActualLen );
 
 #endif /* PLATFORMRINGBUFFER_H_ */
