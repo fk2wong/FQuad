@@ -27,8 +27,7 @@ PlatformStatus PlatformRingBuffer_WriteBuffer( PlatformRingBuffer *const inRingB
 PlatformStatus PlatformRingBuffer_WriteByte( PlatformRingBuffer* const inRingBuffer, const uint8_t inData );
 
 PlatformStatus PlatformRingBuffer_ReadBuffer( PlatformRingBuffer *const inRingBuffer,
-										      uint8_t *const           outData,
-										      const size_t              inRequestedLen,
-										      size_t *const             outActualLen );
+											  uint8_t *const            outData,
+											  const size_t              inRequestedLen );
 
 #endif /* PLATFORMRINGBUFFER_H_ */

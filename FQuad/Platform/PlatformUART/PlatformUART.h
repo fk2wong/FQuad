@@ -18,7 +18,7 @@ PlatformStatus PlatformUART_Init( uint32_t inBaudRate, PlatformRingBuffer *const
 
 PlatformStatus PlatformUART_Transmit( uint8_t* inBuffer, size_t bufferLen );
 
-PlatformStatus PlatformUART_ReceiveBuffer( uint8_t* const outBuffer, size_t inRequestedLen, size_t *const outActualLen );
+PlatformStatus PlatformUART_ReceiveBuffer( uint8_t* const outBuffer, size_t inRequestedLen );
 
 
 #endif /* PLATFORMUART_H_ */
