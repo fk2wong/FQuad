@@ -6,21 +6,25 @@
  */ 
 
 #include "PlatformRingBuffer.h"
+#include "PlatformInterrupt.h"
 #include "FMemory.h"
 #include "require_macros.h"
 #include "FUtilities.h"
 #include <string.h>
 #include <stdbool.h>
-#include <avr/interrupt.h>
 
-#include "PlatformUART.h" // FIXME remove
+//===============//
+//    Defines    //
+//===============//
 
 // The head points to the next available buffer. If the size of the buffer is 32 (indexes 0-31) and index 31 is written to, 
 // then head and tail will be at index 0 after wrapping. This is identical to the start condition, where head and tail are at index 0.
 // Thus there needs to be an extra byte (32) which the head will point to after all bytes are written to.
 #define PLATFORM_RING_BUFFER_OVERHEAD_BYTES ( 1 )
 
-#define ARE_GLOBAL_INTERRUPTS_ENABLED ( SREG & ( 1 << SREG_I )) // TODO Move this to a different file so other modules can use it too
+//===========================//
+//    Struct Delcarations    //
+//===========================//
 
 struct PlatformRingBufferStruct
 {
@@ -30,10 +34,18 @@ struct PlatformRingBufferStruct
 	volatile uint8_t *buffer;    // Contents can be changed in ISR
 };
 
+//====================================//
+//    Static Function Declarations    //
+//====================================//
+
 static inline size_t _PlatformRingBuffer_GetNumFreeBytes( PlatformRingBuffer *const inRingBuffer );
 static inline size_t _PlatformRingBuffer_GetNumUsedBytes( PlatformRingBuffer *const inRingBuffer );
-static inline void _PlatformRingBuffer_UpdateHeadIndex(   PlatformRingBuffer *const inRingBuffer, size_t inSizeToIncrease );
-static inline void _PlatformRingBuffer_UpdateTailIndex(   PlatformRingBuffer *const inRingBuffer, size_t inSizeToIncrease );
+static inline void   _PlatformRingBuffer_UpdateHeadIndex( PlatformRingBuffer *const inRingBuffer, size_t inSizeToIncrease );
+static inline void   _PlatformRingBuffer_UpdateTailIndex( PlatformRingBuffer *const inRingBuffer, size_t inSizeToIncrease );
+
+//====================================//
+//    Public Function Definitions     //
+//====================================//
 
 PlatformRingBuffer * PlatformRingBuffer_Create( size_t inBufferSize )
 {
@@ -82,9 +94,9 @@ PlatformStatus PlatformRingBuffer_WriteBuffer( PlatformRingBuffer *const inRingB
 	require_quiet( _PlatformRingBuffer_GetNumFreeBytes( inRingBuffer ) >= inDataLen, exit );
 	
 	// Disable Global Interrupts, if enabled
-	if ( ARE_GLOBAL_INTERRUPTS_ENABLED )
+	if ( PlatformInterrupt_AreGlobalInterruptsEnabled() )
 	{
-		cli();
+		PlatformInterrupt_DisableGlobalInterrupts();
 		didDisableInterrupts = true;
 	}
 	
@@ -110,7 +122,7 @@ exit:
 	// Enable global interrupts, if we disabled them
 	if ( didDisableInterrupts )
 	{
-		sei();
+		PlatformInterrupt_EnableGlobalInterrupts();
 	}
 	
 	return status;
@@ -127,9 +139,9 @@ PlatformStatus PlatformRingBuffer_WriteByte( PlatformRingBuffer* const inRingBuf
 	require_quiet( _PlatformRingBuffer_GetNumFreeBytes( inRingBuffer ) > 0, exit );
 		
 	// Disable Global Interrupts, if enabled
-	if ( ARE_GLOBAL_INTERRUPTS_ENABLED )
+	if ( PlatformInterrupt_AreGlobalInterruptsEnabled() )
 	{
-		cli();	
+		PlatformInterrupt_DisableGlobalInterrupts();
 		didDisableInterrupts = true;
 	}
 		
@@ -143,7 +155,7 @@ exit:
 	// Enable global interrupts, if we disabled them
 	if ( didDisableInterrupts )
 	{
-		sei();
+		PlatformInterrupt_EnableGlobalInterrupts();
 	}
 	return status;
 }
@@ -153,6 +165,8 @@ PlatformStatus PlatformRingBuffer_ReadBuffer( PlatformRingBuffer *const inRingBu
 										      const size_t              inRequestedLen )
 {
 	PlatformStatus status = PlatformStatus_Failed;
+	size_t sizeToCopy;
+	size_t sizeCopied;
 	
 	bool didDisableInterrupts = false;
 	
@@ -161,59 +175,28 @@ PlatformStatus PlatformRingBuffer_ReadBuffer( PlatformRingBuffer *const inRingBu
 	require_quiet( inRequestedLen, exit );
 	
 	// Disable Global Interrupts, if enabled
-	if ( ARE_GLOBAL_INTERRUPTS_ENABLED )
+	if ( PlatformInterrupt_AreGlobalInterruptsEnabled() )
 	{
-		cli();
+		PlatformInterrupt_DisableGlobalInterrupts();
 		didDisableInterrupts = true;
 	}
-	
-	char usedBytes[3] = {'0','0','0'};
-	char freeBytes[3] = {'0','0','0'};
-	char tailIdx[3] = {'0','0','0'};
-	char headIdx[3] = {'0','0','0'};
-	
-	itoa( _PlatformRingBuffer_GetNumUsedBytes( inRingBuffer ), usedBytes, 10 );
-	itoa( _PlatformRingBuffer_GetNumFreeBytes( inRingBuffer ), freeBytes, 10 );
-	itoa( inRingBuffer->headIndex, headIdx, 10 );
-	itoa( inRingBuffer->tailIndex, tailIdx, 10 );
-	
-	char str1[] = "Bytes used: ";
-	PlatformUART_Transmit( str1, sizeof( str1 ) - 1 );
-	
-	PlatformUART_Transmit( usedBytes, 2 );
-	
-	char str2[] = ", Free: "; 
-	PlatformUART_Transmit( str2, sizeof( str2 ) - 1 );
-	
-	PlatformUART_Transmit( freeBytes, 2 );
-	
-	char str3[] = ", Head: ";
-	PlatformUART_Transmit( str3, sizeof( str3 ) - 1 );
-		
-	PlatformUART_Transmit( headIdx, 2 );
-		
-	char str4[] = ", Tail: ";
-	PlatformUART_Transmit( str4, sizeof( str4 ) - 1 );
-		
-	PlatformUART_Transmit( tailIdx, 2 );
-	
-	char str5[] = ", Data: ";
-	PlatformUART_Transmit( str5, sizeof( str5 ) - 1 );
-	
-	uint8_t numUsedBytes = _PlatformRingBuffer_GetNumUsedBytes( inRingBuffer );
-	
-	for ( uint8_t i = 0; i < numUsedBytes; i++ )
-	{
-		PlatformUART_Transmit( &inRingBuffer->buffer[( inRingBuffer->tailIndex + i ) % inRingBuffer->bufferSize], 1 );
-	}
-		
-	PlatformUART_Transmit( "\n", 1 );
 		
 	// Make sure we have received at least the amount of data requested
 	require_quiet( inRequestedLen <= _PlatformRingBuffer_GetNumUsedBytes( inRingBuffer ), exit );
 
-	// Copy the data into the output buffer
-	memcpy( outData, (void*)&inRingBuffer->buffer[ inRingBuffer->tailIndex ], inRequestedLen );
+	// Copy the data into the output buffer, up to the wrap around 0.
+	sizeToCopy = MIN( inRequestedLen, inRingBuffer->bufferSize - inRingBuffer->tailIndex );
+	
+	memcpy( outData, (void*)&inRingBuffer->buffer[ inRingBuffer->tailIndex ], sizeToCopy );
+	
+	sizeCopied = sizeToCopy;
+	
+	// If there is more data to copy after the ring buffer index wrapped to 0, then copy it from index 0 to the buffer at an offset of the previous copy.
+	if ( sizeCopied < inRequestedLen )
+	{
+		sizeToCopy = inRequestedLen - sizeCopied;
+		memcpy( &outData[ sizeCopied ], (void*)&inRingBuffer->buffer[0], sizeToCopy );
+	}
 	
 	// Update the tail ptr
 	_PlatformRingBuffer_UpdateTailIndex( inRingBuffer, inRequestedLen );
@@ -223,11 +206,15 @@ exit:
 	// Enable global interrupts if we disabled them
 	if ( didDisableInterrupts )
 	{
-		sei();
+		PlatformInterrupt_EnableGlobalInterrupts();
 	}
 
 	return status;
 }
+
+//====================================//
+//    Static Function Definitions     //
+//====================================//
 
 static inline size_t _PlatformRingBuffer_GetNumFreeBytes( PlatformRingBuffer *const inRingBuffer )
 {
