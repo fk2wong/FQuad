@@ -17,6 +17,8 @@
 /*!
  *\brief    Initializes the UART.
  *
+ *\details  This function will also internally disable the power save for the UART with PlatformPowerSave_PowerOn().
+ *
  *\param    inBaudRate   - Baud Rate for UART communication. Higher speeds ( above 576,000 BAUD ) may have corrupted RX data, 
  *                       - since there is no DMA controller on the ATMega328p.
  *\param    inRingBuffer - Ring buffer for RX data, needed since the RX FIFO can only store up to 3 bytes.

@@ -7,6 +7,7 @@
 
 
 #include "PlatformUART.h"
+#include "PlatformPowerSave.h"
 #include "PlatformInterrupt.h"
 #include "require_macros.h"
 #include <stdbool.h>
@@ -47,7 +48,9 @@ PlatformStatus PlatformUART_Init( uint32_t inBaudRate, PlatformRingBuffer *const
 	require_quiet( !mUARTIsInitialized, exit );
 	require_quiet( inRingBuffer,        exit );
 
-	// TODO initialize the clocks/powersave bit for the UART?
+	// Disable Power Reduction (enable power) to the UART
+	status = PlatformPowerSave_PowerOnDomain( PlatformPowerSaveDomain_USART );
+	require_noerr_quiet( status, exit );
 	
 	// Initialize UCSR0A as non-double transmission speed, single processor mode ( All default )
 	

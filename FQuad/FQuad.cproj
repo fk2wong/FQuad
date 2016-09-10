@@ -92,6 +92,7 @@
       <Value>../Shared/FUtilities</Value>
       <Value>../Platform/PlatformUART</Value>
       <Value>../Platform/PlatformInterrupt</Value>
+      <Value>../Platform/PlatformPowerSave</Value>
     </ListValues>
   </avrgcc.compiler.directories.IncludePaths>
   <avrgcc.compiler.optimization.level>Optimize (-O1)</avrgcc.compiler.optimization.level>
@@ -122,6 +123,12 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="Platform\PlatformInterrupt\PlatformInterrupt.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Platform\PlatformPowerSave\PlatformPowerSave.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Platform\PlatformPowerSave\PlatformPowerSave.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="Platform\PlatformRingBuffer\PlatformRingBuffer.c">
@@ -156,6 +163,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Platform\PlatformPowerSave" />
     <Folder Include="Platform\PlatformInterrupt" />
     <Folder Include="Platform\PlatformRingBuffer" />
     <Folder Include="Platform\PlatformUART" />

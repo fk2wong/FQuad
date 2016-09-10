@@ -19,14 +19,17 @@ int main(void)
 	PlatformStatus status;
 	PlatformRingBuffer* ringBuf = NULL;
 	
+	status = PlatformPowerSave_PowerOffAllDomains();
+	require_noerr_quiet( status, exit );
+	
 	status = PlatformGPIO_InitAllGPIOs();
-	require_noerr( status, exit );
+	require_noerr_quiet( status, exit );
 	
 	ringBuf = PlatformRingBuffer_Create( 32 );
-	require( ringBuf, exit );
+	require_quiet( ringBuf, exit );
 	
 	status = PlatformUART_Init( 19200, ringBuf );
-	require_noerr( status, exit );
+	require_noerr_quiet( status, exit );
 	
     while(1)
     {	

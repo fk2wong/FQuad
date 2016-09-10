@@ -13,6 +13,8 @@
 #include "PlatformGPIO.h"
 #include "PlatformRingBuffer.h"
 #include "PlatformUART.h"
+#include "PlatformInterrupt.h"
+#include "PlatformPowerSave.h"
 
 typedef enum 
 {	
