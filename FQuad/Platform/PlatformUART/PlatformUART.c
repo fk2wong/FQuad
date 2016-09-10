@@ -17,7 +17,7 @@
 
 #ifndef F_CPU
 #define F_CPU 16000000
-#warning F_CPU Not defined!
+#warning F_CPU Not defined! Using 16MHz.
 #endif
 
 #define PLATFORM_UART_UBRR0L_MASK       ( 0xFF )
@@ -61,7 +61,7 @@ PlatformStatus PlatformUART_Init( uint32_t inBaudRate, PlatformRingBuffer *const
 	UCSR0C = ( 1 << UCSZ00 ) | ( 1 << UCSZ01 );
 	
 	// Calculate Baud Rate Register Values. Formula reference from ATMega328P datasheet table 24-1, with float to int conversion.
-	baudRateRegVal = ( uint16_t )((( float )( F_CPU ) / ( float )( inBaudRate )) + 0.5f ) - 1;
+	baudRateRegVal = ( uint16_t )((( float )( F_CPU ) / ( float )( inBaudRate ) / 16.0f ) + 0.5f ) - 1;
 	
 	// Verify that the baud rate register value is within range
 	require_quiet( baudRateRegVal <= PLATFORM_UART_BAUD_RATE_REG_MAX, exit );
