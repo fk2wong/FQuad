@@ -12,20 +12,21 @@
 
 #include "Platform_FQuad.h"
 #include <util/delay.h>
+#include "require_macros.h"
 
 int main(void)
 {
-	PlatformGPIO_InitAllGPIOs();
-	
-	PlatformGPIO_Configure( FQuadGPIO_PadX, PlatformGPIOConfig_Output );
-	PlatformGPIO_Configure( FQuadGPIO_PadSelect, PlatformGPIOConfig_Output );
-	
-	PlatformGPIO_Toggle( FQuadGPIO_PadX );
+	PlatformStatus status;
+	status = PlatformGPIO_InitAllGPIOs();
+	require_noerr( status, exit );
 	
     while(1)
-    {
-		PlatformGPIO_Toggle( FQuadGPIO_PadX );
-		PlatformGPIO_Toggle( FQuadGPIO_PadSelect );
+    {	
+		status = PlatformGPIO_Toggle( FQuadGPIO_TestLED );
+		require_noerr( status, exit );
+		
 		_delay_ms( 1000 );
     }
+exit:
+	while ( 1 );
 }
