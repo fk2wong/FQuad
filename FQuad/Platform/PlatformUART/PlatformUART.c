@@ -7,6 +7,7 @@
 
 
 #include "PlatformUART.h"
+#include "PlatformClock.h"
 #include "PlatformPowerSave.h"
 #include "PlatformInterrupt.h"
 #include "require_macros.h"
@@ -18,7 +19,7 @@
 
 #ifndef F_CPU
 #define F_CPU 16000000
-#warning F_CPU Not defined! Using 16MHz.
+#error F_CPU Not defined! Please include PlatformClock.h.
 #endif
 
 #define PLATFORM_UART_UBRR0L_MASK       ( 0xFF )

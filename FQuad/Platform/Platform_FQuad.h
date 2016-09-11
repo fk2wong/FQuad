@@ -10,11 +10,13 @@
 #define PLATFORM_FQUAD_H_
 
 #include "Platform.h"
+#include "PlatformInterrupt.h"
+#include "PlatformPowerSave.h"
+#include "PlatformClock.h"
 #include "PlatformGPIO.h"
 #include "PlatformRingBuffer.h"
 #include "PlatformUART.h"
-#include "PlatformInterrupt.h"
-#include "PlatformPowerSave.h"
+
 
 typedef enum 
 {	

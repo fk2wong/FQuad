@@ -8,8 +8,6 @@
 
 #include <avr/io.h>
 
-#define F_CPU 16000000
-
 #include "Platform_FQuad.h"
 #include <util/delay.h>
 #include "require_macros.h"
