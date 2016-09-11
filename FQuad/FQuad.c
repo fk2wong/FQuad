@@ -19,7 +19,7 @@ int main(void)
 	PlatformStatus status;
 	PlatformRingBuffer* ringBuf = NULL;
 	
-	status = PlatformPowerSave_PowerOffAllDomains();
+	status = PlatformPowerSave_PowerOffAllPeripherals();
 	require_noerr_quiet( status, exit );
 	
 	status = PlatformGPIO_InitAllGPIOs();

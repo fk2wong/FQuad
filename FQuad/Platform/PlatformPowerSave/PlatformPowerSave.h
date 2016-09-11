@@ -13,23 +13,47 @@
  
 typedef enum 
 {
-	PlatformPowerSaveDomain_ADC = 0,
-	PlatformPowerSaveDomain_USART,
-	PlatformPowerSaveDomain_SPI,
-	PlatformPowerSaveDomain_Timer0,
-	PlatformPowerSaveDomain_Timer1,
-	PlatformPowerSaveDomain_Timer2,
-	PlatformPowerSaveDomain_I2C,
-	PlatformPowerSaveDomain_MaxDomains,
-} PlatformPowerSaveDomain_t;
+	PlatformPowerSavePeripheral_ADC = 0,
+	PlatformPowerSavePeripheral_USART,
+	PlatformPowerSavePeripheral_SPI,
+	PlatformPowerSavePeripheral_Timer0,
+	PlatformPowerSavePeripheral_Timer1,
+	PlatformPowerSavePeripheral_Timer2,
+	PlatformPowerSavePeripheral_I2C,
+	PlatformPowerSavePeripheral_MaxPeripherals,
+} PlatformPowerSavePeripheral_t;
 
-PlatformStatus PlatformPowerSave_PowerOnAllDomains( void );
+/*!
+ *\brief    Enables power on to all peripherals. See enum PlatformPowerSavePeripheral_t for a list of peripherals. 
+ *
+ *\return   PlatformStatus_Success if successful. PlatformStatus_Failed if anything failed.
+ */
+PlatformStatus PlatformPowerSave_PowerOnAllPeripherals( void );
 
-PlatformStatus PlatformPowerSave_PowerOffAllDomains( void );
+/*!
+ *\brief    Disables power on to all peripherals. See enum PlatformPowerSavePeripheral_t for a list of peripherals. 
+ *
+ *\details  After this function is called on a peripheral, its clock will be disabled and it will be unusable until PlatformPowerSave_PowerOnDomain() is called.
+ *
+ *\return   PlatformStatus_Success if successful. PlatformStatus_Failed if anything failed.
+ */
+PlatformStatus PlatformPowerSave_PowerOffAllPeripherals( void );
 
-PlatformStatus PlatformPowerSave_PowerOnDomain( PlatformPowerSaveDomain_t inDomain );
+/*!
+ *\brief    Enables power on to a peripheral. See enum PlatformPowerSavePeripheral_t for a list of peripherals. 
+ *
+ *\return   PlatformStatus_Success if successful. PlatformStatus_Failed if anything failed.
+ */
+PlatformStatus PlatformPowerSave_PowerOnPeripheral( PlatformPowerSavePeripheral_t inDomain );
 
-PlatformStatus PlatformPowerSave_PowerOffDomain( PlatformPowerSaveDomain_t inDomain );
+/*!
+ *\brief    Disables power on to a peripheral. See enum PlatformPowerSavePeripheral_t for a list of peripherals. 
+ *
+ *\details  After this function is called on a peripheral, its clock will be disabled and it will be unusable until PlatformPowerSave_PowerOnDomain() is called.
+ *
+ *\return   PlatformStatus_Success if successful. PlatformStatus_Failed if anything failed.
+ */
+PlatformStatus PlatformPowerSave_PowerOffPeripheral( PlatformPowerSavePeripheral_t inDomain );
 
 
 

@@ -49,7 +49,7 @@ PlatformStatus PlatformUART_Init( uint32_t inBaudRate, PlatformRingBuffer *const
 	require_quiet( inRingBuffer,        exit );
 
 	// Disable Power Reduction (enable power) to the UART
-	status = PlatformPowerSave_PowerOnDomain( PlatformPowerSaveDomain_USART );
+	status = PlatformPowerSave_PowerOnPeripheral( PlatformPowerSavePeripheral_USART );
 	require_noerr_quiet( status, exit );
 	
 	// Initialize UCSR0A as non-double transmission speed, single processor mode ( All default )

@@ -9,13 +9,13 @@
 #include "require_macros.h"
 #include <avr/io.h>
 
-PlatformStatus PlatformPowerSave_PowerOnAllDomains( void )
+PlatformStatus PlatformPowerSave_PowerOnAllPeripherals( void )
 {
 	PlatformStatus status = PlatformStatus_Failed;
 	
-	for ( uint8_t i = 0; i < PlatformPowerSaveDomain_MaxDomains; i++ )
+	for ( uint8_t i = 0; i < PlatformPowerSavePeripheral_MaxPeripherals; i++ )
 	{
-		status = PlatformPowerSave_PowerOnDomain( i );
+		status = PlatformPowerSave_PowerOnPeripheral( i );
 		require_noerr_quiet( status, exit );
 	}
 	
@@ -23,13 +23,13 @@ exit:
 	return status;
 }
 
-PlatformStatus PlatformPowerSave_PowerOffAllDomains( void )
+PlatformStatus PlatformPowerSave_PowerOffAllPeripherals( void )
 {
 	PlatformStatus status = PlatformStatus_Failed;
 	
-	for ( uint8_t i = 0; i < PlatformPowerSaveDomain_MaxDomains; i++ )
+	for ( uint8_t i = 0; i < PlatformPowerSavePeripheral_MaxPeripherals; i++ )
 	{
-		status = PlatformPowerSave_PowerOffDomain( i );
+		status = PlatformPowerSave_PowerOffPeripheral( i );
 		require_noerr_quiet( status, exit );
 	}
 
@@ -37,43 +37,43 @@ exit:
 	return status;
 }
 
-PlatformStatus PlatformPowerSave_PowerOnDomain( PlatformPowerSaveDomain_t inDomain )
+PlatformStatus PlatformPowerSave_PowerOnPeripheral( PlatformPowerSavePeripheral_t inPeripheral )
 {
 	PlatformStatus status = PlatformStatus_Failed;
 	
-	switch ( inDomain )
+	switch ( inPeripheral )
 	{
-		case PlatformPowerSaveDomain_ADC:
+		case PlatformPowerSavePeripheral_ADC:
 		{
 			PRR &= ~( 1 << PRADC );
 			break;
 		}
-		case PlatformPowerSaveDomain_USART:
+		case PlatformPowerSavePeripheral_USART:
 		{
 			PRR &= ~( 1 << PRUSART0 );
 			break;
 		}
-		case PlatformPowerSaveDomain_SPI:
+		case PlatformPowerSavePeripheral_SPI:
 		{
 			PRR &= ~( 1 << PRSPI );
 			break;
 		}
-		case PlatformPowerSaveDomain_I2C:
+		case PlatformPowerSavePeripheral_I2C:
 		{
 			PRR &= ~( 1 << PRTWI );
 			break;
 		}
-		case PlatformPowerSaveDomain_Timer0:
+		case PlatformPowerSavePeripheral_Timer0:
 		{
 			PRR &= ~( 1 << PRTIM0 );
 			break;
 		}
-		case PlatformPowerSaveDomain_Timer1:
+		case PlatformPowerSavePeripheral_Timer1:
 		{
 			PRR &= ~( 1 << PRTIM1 );
 			break;
 		}
-		case PlatformPowerSaveDomain_Timer2:
+		case PlatformPowerSavePeripheral_Timer2:
 		{
 			PRR &= ~( 1 << PRTIM2 );
 			break;
@@ -89,43 +89,43 @@ exit:
 	return status;
 }
 
-PlatformStatus PlatformPowerSave_PowerOffDomain( PlatformPowerSaveDomain_t inDomain )
+PlatformStatus PlatformPowerSave_PowerOffPeripheral( PlatformPowerSavePeripheral_t inPeripheral )
 {
 	PlatformStatus status = PlatformStatus_Failed;
 	
-	switch ( inDomain )
+	switch ( inPeripheral )
 	{
-		case PlatformPowerSaveDomain_ADC:
+		case PlatformPowerSavePeripheral_ADC:
 		{
 			PRR |= 1 << PRADC;
 			break;
 		}
-		case PlatformPowerSaveDomain_USART:
+		case PlatformPowerSavePeripheral_USART:
 		{
 			PRR |= 1 << PRUSART0;
 			break;
 		}
-		case PlatformPowerSaveDomain_SPI:
+		case PlatformPowerSavePeripheral_SPI:
 		{
 			PRR |= 1 << PRSPI;
 			break;
 		}
-		case PlatformPowerSaveDomain_I2C:
+		case PlatformPowerSavePeripheral_I2C:
 		{
 			PRR |= 1 << PRTWI;
 			break;
 		}
-		case PlatformPowerSaveDomain_Timer0:
+		case PlatformPowerSavePeripheral_Timer0:
 		{
 			PRR |= 1 << PRTIM0;
 			break;
 		}
-		case PlatformPowerSaveDomain_Timer1:
+		case PlatformPowerSavePeripheral_Timer1:
 		{
 			PRR |= 1 << PRTIM1;
 			break;
 		}
-		case PlatformPowerSaveDomain_Timer2:
+		case PlatformPowerSavePeripheral_Timer2:
 		{
 			PRR |= 1 << PRTIM2;
 			break;
