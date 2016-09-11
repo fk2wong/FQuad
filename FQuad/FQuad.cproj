@@ -87,6 +87,13 @@
       <Value>../Platform/PlatformGPIO</Value>
       <Value>../Platform/PlatformStatus</Value>
       <Value>../Shared/require_macros</Value>
+      <Value>../Shared/FMemory</Value>
+      <Value>../Platform/PlatformRingBuffer</Value>
+      <Value>../Shared/FUtilities</Value>
+      <Value>../Platform/PlatformUART</Value>
+      <Value>../Platform/PlatformInterrupt</Value>
+      <Value>../Platform/PlatformPowerSave</Value>
+      <Value>../Platform/PlatformClock</Value>
     </ListValues>
   </avrgcc.compiler.directories.IncludePaths>
   <avrgcc.compiler.optimization.level>Optimize (-O1)</avrgcc.compiler.optimization.level>
@@ -107,7 +114,7 @@
     <Compile Include="FQuad.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="Platform\Platform.h">
+    <Compile Include="Platform\PlatformClock\PlatformClock.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="Platform\PlatformGPIO\PlatformGPIO.c">
@@ -116,10 +123,40 @@
     <Compile Include="Platform\PlatformGPIO\PlatformGPIO.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="Platform\PlatformInterrupt\PlatformInterrupt.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Platform\PlatformPowerSave\PlatformPowerSave.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Platform\PlatformPowerSave\PlatformPowerSave.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Platform\PlatformRingBuffer\PlatformRingBuffer.c">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="Platform\PlatformStatus\PlatformStatus.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="Platform\PlatformRingBuffer\PlatformRingBuffer.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Platform\PlatformUART\PlatformUART.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Platform\PlatformUART\PlatformUART.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="Platform\Platform_FQuad.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Shared\FMemory\FMemory.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Shared\FMemory\FMemory.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Shared\FUtilities\FUtilities.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="Shared\require_macros\require_macros.h">
@@ -127,10 +164,17 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Platform\PlatformClock" />
+    <Folder Include="Platform\PlatformPowerSave" />
+    <Folder Include="Platform\PlatformInterrupt" />
+    <Folder Include="Platform\PlatformRingBuffer" />
+    <Folder Include="Platform\PlatformUART" />
     <Folder Include="Shared" />
     <Folder Include="Platform" />
     <Folder Include="Platform\PlatformStatus" />
     <Folder Include="Platform\PlatformGPIO" />
+    <Folder Include="Shared\FMemory" />
+    <Folder Include="Shared\FUtilities" />
     <Folder Include="Shared\require_macros" />
   </ItemGroup>
   <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\Compiler.targets" />
