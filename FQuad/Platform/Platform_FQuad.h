@@ -9,7 +9,6 @@
 #ifndef PLATFORM_FQUAD_H_
 #define PLATFORM_FQUAD_H_
 
-#include "Platform.h"
 #include "PlatformInterrupt.h"
 #include "PlatformPowerSave.h"
 #include "PlatformClock.h"

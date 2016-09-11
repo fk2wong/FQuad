@@ -9,7 +9,6 @@
 #ifndef PLATFORMUART_H_
 #define PLATFORMUART_H_
 
-#include "Platform.h"
 #include "PlatformStatus.h"
 #include "PlatformRingBuffer.h"
 #include <avr/io.h>

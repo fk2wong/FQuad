@@ -114,9 +114,6 @@
     <Compile Include="FQuad.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="Platform\Platform.h">
-      <SubType>compile</SubType>
-    </Compile>
     <Compile Include="Platform\PlatformClock\PlatformClock.h">
       <SubType>compile</SubType>
     </Compile>
