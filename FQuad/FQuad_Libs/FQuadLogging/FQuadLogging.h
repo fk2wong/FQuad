@@ -9,19 +9,17 @@
 #ifndef FQUADLOGGING_H_
 #define FQUADLOGGING_H_
 
-#include "PlatformUART.h"
-#include <string.h>
-#include <stdio.h>
-
-#define USING_UART_AS_LOGGING 1 // Set to 0 when using UART for XBee
+#define ENABLE_DEBUG_LOGGING 1  // Since this shares UART with XBee, this should be set to 0 when the XBee is used.
 
 #define FQUAD_LOGGING_MAX_BUFFER_SIZE ( 64 )
 
 #define REMOVE_BRACES( ... ) __VA_ARGS__
 
-#if USING_UART_AS_LOGGING
+#if ENABLE_DEBUG_LOGGING
 
-void FQuadLogging_Print( const char* str, ... );
+#include "PlatformUART.h"
+#include <string.h>
+#include <stdio.h>
 
 #define FQUAD_DEBUG_LOG( X )                                             \
 	do                                                                   \
@@ -33,8 +31,8 @@ void FQuadLogging_Print( const char* str, ... );
 		strLen = strlen( str );                                          \
 		PlatformUART_Transmit(( uint8_t* )str, strLen );                 \
 	} while ( 0 )
-#else // USING_UART_AS_LOGGING
+#else // ENABLE_DEBUG_LOGGING
 #define FQUAD_DEBUG_LOG( X )
-#endif // USING_UART_AS_LOGGING
+#endif // ENABLE_DEBUG_LOGGING
 
 #endif /* FQUADLOGGING_H_ */

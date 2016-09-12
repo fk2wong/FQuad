@@ -117,9 +117,6 @@
     <Compile Include="FQuad.c">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="FQuad_Libs\FQuadLogging\FQuadLogging.c">
-      <SubType>compile</SubType>
-    </Compile>
     <Compile Include="FQuad_Libs\FQuadLogging\FQuadLogging.h">
       <SubType>compile</SubType>
     </Compile>
