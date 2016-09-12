@@ -15,6 +15,7 @@
 #include "PlatformGPIO.h"
 #include "PlatformRingBuffer.h"
 #include "PlatformUART.h"
+#include "PlatformADC.h"
 
 
 typedef enum 

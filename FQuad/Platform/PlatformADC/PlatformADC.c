@@ -9,6 +9,7 @@
 #include "PlatformClock.h"
 #include "PlatformPowerSave.h"
 #include "require_macros.h"
+#include "FQuadLogging.h"
 #include <avr/io.h>
 
 //======================//
@@ -25,7 +26,12 @@
 
 #define PLATFORM_ADC_GET_MASK( X )       ( 1 << ( X ))
 
-#define PLATFORM_ADC_MUX_MASK            ( 1 << MUX0 ) | ( 1 << MUX1 ) | ( 1 << MUX2 ) | ( 1 << MUX3 )
+#define PLATFORM_ADC_MUX_PIN_MASK        (( 1 << MUX0 ) | ( 1 << MUX1 ) | ( 1 << MUX2 ) | ( 1 << MUX3 ))
+
+#define PLATFORM_ADC_MUX_REF_MASK        (( 1 << REFS0 ) | ( 1 << REFS1 ))
+#define PLATFORM_ADC_VCC_AS_AREF         ( 1 << REFS0 )
+
+#define PLATFORM_ADC_DISABLE_ALL_INPUT_BUFFERS (( 1 << ADC0D ) | ( 1 << ADC1D ) | ( 1 << ADC2D ) | ( 1 << ADC3D ) | ( 1 << ADC4D ) | ( 1 << ADC5D ))
 
 //======================//
 //   Static Variables   //
@@ -52,7 +58,7 @@ PlatformStatus PlatformADC_DisableAllInputBuffers( void )
 	require_quiet( mPlatformADCInitializedADCs == 0, exit );
 	
 	// Disable all input buffers
-	DIDR0 = 0xFF;
+	DIDR0 = PLATFORM_ADC_DISABLE_ALL_INPUT_BUFFERS;
 	
 	status = PlatformStatus_Success;
 exit:
@@ -62,6 +68,9 @@ exit:
 PlatformStatus PlatformADC_Init( PlatformADC_t inADC )
 {
 	PlatformStatus status = PlatformStatus_Failed;
+	
+	// Check this is a valid ADC
+	require_quiet( inADC < PlatformADC_Max, exit );
 	
 	// Check that this ADC is not already initialized
 	require_quiet(( mPlatformADCInitializedADCs & PLATFORM_ADC_GET_MASK( inADC )) == 0, exit );
@@ -78,6 +87,10 @@ PlatformStatus PlatformADC_Init( PlatformADC_t inADC )
 		require_quiet( chosenPrescaler != PLATFORM_ADC_INVALID_PRESCALER, exit );	
 		
 		ADCSRA |= ( 1 << ADEN ) | chosenPrescaler;
+		
+		// Set the voltage reference source as Vcc
+		ADMUX &= ~PLATFORM_ADC_MUX_REF_MASK;
+		ADMUX |= PLATFORM_ADC_VCC_AS_AREF;
 	}
 	
 	// Regardless, enable the specific input buffer
@@ -95,7 +108,8 @@ PlatformStatus PlatformADC_Read( PlatformADC_t inADC, uint16_t *const outADCValu
 {
 	PlatformStatus status = PlatformStatus_Failed;
 	
-	require_quiet( outADCValue, exit );
+	require_quiet( inADC < PlatformADC_Max, exit );
+	require_quiet( outADCValue,             exit );
 	
 	// Check that this ADC is initialized
 	require_quiet( mPlatformADCInitializedADCs & PLATFORM_ADC_GET_MASK( inADC ), exit );
@@ -104,7 +118,7 @@ PlatformStatus PlatformADC_Read( PlatformADC_t inADC, uint16_t *const outADCValu
 	require_quiet(( ADCSRA & ( 1 << ADSC )) == 0, exit );
 	
 	// Clear the previous ADC input MUX selection
-	ADMUX &= ~( PLATFORM_ADC_MUX_MASK );
+	ADMUX &= ~( PLATFORM_ADC_MUX_PIN_MASK );
 	
 	// Select the ADC input from the MUX
 	ADMUX |= inADC;
@@ -115,7 +129,7 @@ PlatformStatus PlatformADC_Read( PlatformADC_t inADC, uint16_t *const outADCValu
 	// Wait for conversion complete
 	while( ADCSRA & ( 1 << ADSC ));
 	
-	// Get the ADC Value; LSB Register must be read first. // TODO Does this actually compile to the order we want?
+	// Get the ADC Value; LSB Register must be read first.
 	*outADCValue = ADCL;
 	*outADCValue |= ADCH << 8;
 	
@@ -127,6 +141,9 @@ exit:
 PlatformStatus PlatformADC_Deinit( PlatformADC_t inADC )
 {
 	PlatformStatus status = PlatformStatus_Failed;
+	
+	// Check this is a valid ADC
+	require_quiet( inADC < PlatformADC_Max, exit );
 	
 	// Check that this ADC is initialized
 	require_quiet( mPlatformADCInitializedADCs & PLATFORM_ADC_GET_MASK( inADC ), exit );
@@ -167,7 +184,7 @@ static uint8_t _PlatformADC_GetInputClockPrescaler( void )
 	minDivisionFactor = F_CPU / PLATFORM_ADC_INPUT_CLOCK_MAX_HZ;
 			
 	// Loop and find the fastest acceptable prescaler setting
-	for ( uint8_t i = 1; i < PLATFORM_ADC_MAX_PRESCALER_VALUE; i++ )
+	for ( uint8_t i = 1; i <= PLATFORM_ADC_MAX_PRESCALER_VALUE; i++ )
 	{
 		chosenDivisionFactor = _PlatformADC_GetDivisionFactorFromPrescaler( i );
 		require_quiet( chosenDivisionFactor != PLATFORM_ADC_INVALID_DIV_FACTOR, exit );
@@ -193,7 +210,7 @@ static uint8_t _PlatformADC_GetDivisionFactorFromPrescaler( uint8_t inPrescaler 
 	}
 	else if ( inPrescaler <= PLATFORM_ADC_MAX_PRESCALER_VALUE )
 	{
-		divFactor = ( 1 << ( inPrescaler + 1 ));
+		divFactor = ( 1 << inPrescaler);
 	}
 	return divFactor;
 }

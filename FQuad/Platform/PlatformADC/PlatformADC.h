@@ -20,8 +20,7 @@ typedef enum
 	PlatformADC_ADC3,
 	PlatformADC_ADC4,
 	PlatformADC_ADC5,
-	PlatformADC_ADC6,
-	PlatformADC_ADC7,
+	PlatformADC_Max,
 } PlatformADC_t;
 
 /*!
