@@ -34,7 +34,15 @@ typedef enum
 	FQuadGPIO_PadLeftBumper  = PlatformGPIO_PTB3,
 	FQuadGPIO_PadRightBumper = PlatformGPIO_PTB4,
 	FQuadGPIO_TestLED        = PlatformGPIO_PTB5,
-} FQuadGpio_t;
+} FQuadGPIO_t;
+
+typedef enum 
+{
+	FQuadADC_PadLeftVertical    = PlatformADC_ADC2,
+	FQuadADC_PadLeftHorizontal  = PlatformADC_ADC3,
+	FQuadADC_PadRightVertical   = PlatformADC_ADC4,
+	FQuadADC_PadRightHorizontal = PlatformADC_ADC5,
+} FQuadADC_t;
 
 
 #endif /* PLATFORM_FQUAD_H_ */

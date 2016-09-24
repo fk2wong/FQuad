@@ -48,16 +48,16 @@ int main(void)
 		}
 		
 		// Test ADC
-		status = PlatformADC_Init( PlatformADC_ADC4 );
+		status = PlatformADC_Init( FQuadADC_PadLeftVertical );
 		require_noerr_quiet( status, exit );
 		
 		uint16_t adcVal;
-		status = PlatformADC_Read( PlatformADC_ADC4, &adcVal );
+		status = PlatformADC_Read( FQuadADC_PadLeftVertical, &adcVal );
 		require_noerr( status, exit );
 		
 		FQUAD_DEBUG_LOG(( "ADC Read: %d\n", adcVal ));
 		
-		status = PlatformADC_Deinit( PlatformADC_ADC4 );
+		status = PlatformADC_Deinit( FQuadADC_PadLeftVertical );
 		require_noerr_quiet( status, exit );
 				
 		_delay_ms( 500 );
