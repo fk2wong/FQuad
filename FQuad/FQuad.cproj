@@ -94,6 +94,9 @@
       <Value>../Platform/PlatformInterrupt</Value>
       <Value>../Platform/PlatformPowerSave</Value>
       <Value>../Platform/PlatformClock</Value>
+      <Value>../Platform/PlatformADC</Value>
+      <Value>../FQuad_Libs</Value>
+      <Value>../FQuad_Libs/FQuadLogging</Value>
     </ListValues>
   </avrgcc.compiler.directories.IncludePaths>
   <avrgcc.compiler.optimization.level>Optimize (-O1)</avrgcc.compiler.optimization.level>
@@ -112,6 +115,15 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="FQuad.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="FQuad_Libs\FQuadLogging\FQuadLogging.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Platform\PlatformADC\PlatformADC.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Platform\PlatformADC\PlatformADC.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="Platform\PlatformClock\PlatformClock.h">
@@ -164,6 +176,9 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="FQuad_Libs" />
+    <Folder Include="FQuad_Libs\FQuadLogging" />
+    <Folder Include="Platform\PlatformADC" />
     <Folder Include="Platform\PlatformClock" />
     <Folder Include="Platform\PlatformPowerSave" />
     <Folder Include="Platform\PlatformInterrupt" />

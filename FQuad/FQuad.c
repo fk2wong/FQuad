@@ -6,11 +6,14 @@
  */ 
 
 
-#include <avr/io.h>
+
 
 #include "Platform_FQuad.h"
-#include <util/delay.h>
+#include "FQuadLogging.h"
 #include "require_macros.h"
+#include <util/delay.h>
+#include <stdlib.h>
+#include <avr/io.h>
 
 int main(void)
 {
@@ -31,29 +34,38 @@ int main(void)
 	
     while(1)
     {	
+		// Test GPIO
 		status = PlatformGPIO_Toggle( FQuadGPIO_TestLED );
 		require_noerr( status, exit );
 		
+		// Test UART
 		uint8_t rxData[5];
-		
 		status = PlatformUART_Receive( rxData, sizeof( rxData ));
 		
-		if ( status == 0 )
+		if ( status == PlatformStatus_Success )
 		{
-			uint8_t rxString[] = "Received: ";
-					
-			status = PlatformUART_Transmit( rxString, sizeof( rxString ) - 1 );
-			require_noerr( status, exit );
-		
-			status = PlatformUART_Transmit( rxData, sizeof( rxData ) );
-			require_noerr( status, exit );
-					
-			status = PlatformUART_Transmit(( uint8_t* )".\n", 2 );
-			require_noerr( status, exit );	
+			FQUAD_DEBUG_LOG(( "UART Received: %s.\n", rxData ));	
 		}
+		
+		// Test ADC
+		status = PlatformADC_Init( FQuadADC_PadLeftVertical );
+		require_noerr_quiet( status, exit );
+		
+		uint16_t adcVal;
+		status = PlatformADC_Read( FQuadADC_PadLeftVertical, &adcVal );
+		require_noerr( status, exit );
+		
+		FQUAD_DEBUG_LOG(( "ADC Read: %d\n", adcVal ));
+		
+		status = PlatformADC_Deinit( FQuadADC_PadLeftVertical );
+		require_noerr_quiet( status, exit );
 				
 		_delay_ms( 500 );
     }
 exit:
-	while ( 1 );
+	while ( 1 )
+	{
+		PlatformGPIO_Toggle( FQuadGPIO_TestLED );
+		_delay_ms( 100 );
+	}
 }
