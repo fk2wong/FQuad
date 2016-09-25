@@ -10,17 +10,25 @@
 #define PLATFORMPWM_H_
 
 #include "PlatformStatus.h"
+#include <stdint.h>
 
 typedef enum
 {
 	PlatformPWM_0A, 
 	PlatformPWM_0B,
-	PlatformPWM_1A, // Maybe don't implement PWM on timer1 so that all PWM is 8bit resolution, and stick with freq = 16M/256/256Prescaler = 244 Hz.
+	PlatformPWM_1A,
+	PlatformPWM_1B,
 	PlatformPWM_2A, 
 	PlatformPWM_2B,
 } PlatformPWM_t;
 
-PlatformStatus PlatformPWM_Init( PlatformPWM_t inPWM );
+PlatformStatus PlatformPWM_Init( const PlatformPWM_t inPWM, const uint32_t inRequestedPWMFrequency );
+
+PlatformStatus PlatformPWM_Start( const PlatformPWM_t inPWM, const uint8_t inDutyCycle );
+
+PlatformStatus PlatformPWM_Stop( const PlatformPWM_t inPWM );
+
+PlatformStatus PlatformPWM_Deinit( const PlatformPWM_t inPWM );
 
 
 

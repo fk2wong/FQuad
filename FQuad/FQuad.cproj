@@ -97,6 +97,7 @@
       <Value>../Platform/PlatformADC</Value>
       <Value>../FQuad_Libs</Value>
       <Value>../FQuad_Libs/FQuadLogging</Value>
+      <Value>../Platform/PlatformPWM</Value>
     </ListValues>
   </avrgcc.compiler.directories.IncludePaths>
   <avrgcc.compiler.optimization.level>Optimize (-O1)</avrgcc.compiler.optimization.level>
@@ -144,6 +145,12 @@
     <Compile Include="Platform\PlatformPowerSave\PlatformPowerSave.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="Platform\PlatformPWM\PlatformPWM.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Platform\PlatformPWM\PlatformPWM.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="Platform\PlatformRingBuffer\PlatformRingBuffer.c">
       <SubType>compile</SubType>
     </Compile>
@@ -178,6 +185,7 @@
   <ItemGroup>
     <Folder Include="FQuad_Libs" />
     <Folder Include="FQuad_Libs\FQuadLogging" />
+    <Folder Include="Platform\PlatformPWM" />
     <Folder Include="Platform\PlatformADC" />
     <Folder Include="Platform\PlatformClock" />
     <Folder Include="Platform\PlatformPowerSave" />
