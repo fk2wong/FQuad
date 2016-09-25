@@ -24,7 +24,7 @@ typedef enum
 
 PlatformStatus PlatformPWM_Init( const PlatformPWM_t inPWM, const uint32_t inRequestedPWMFrequency );
 
-PlatformStatus PlatformPWM_Start( const PlatformPWM_t inPWM, const uint8_t inDutyCycle );
+PlatformStatus PlatformPWM_Start( const PlatformPWM_t inPWM, const float inDutyCycle );
 
 PlatformStatus PlatformPWM_Stop( const PlatformPWM_t inPWM );
 

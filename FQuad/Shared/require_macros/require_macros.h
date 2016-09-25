@@ -68,30 +68,30 @@ while ( 0 )
 #endif // USE_PRODUCTION_CODE
 
 #if USE_PRODUCTION_CODE
-#define require_action( err, label, action ) \
-do                                           \
-{                                            \
-	if ( __builtin_expect(( err ) != 0, 0 )) \
-	{                                        \
-		action;                              \
-		goto label;                          \
-	}                                        \
-}                                            \
+#define require_action( assertation, label, action ) \
+do                                                   \
+{                                                    \
+	if ( __builtin_expect( !( assertation ), 0 ))    \
+	{                                                \
+		action;                                      \
+		goto label;                                  \
+	}                                                \
+}                                                    \
 while ( 0 )
 #else
 #define require_action( err, label, action ) //TODO
 #endif // USE_PRODUCTION_CODE
 
 #if USE_PRODUCTION_CODE
-#define require_action_quiet( err, label, action ) \
-do                                                 \
-{                                                  \
-	if ( __builtin_expect(( err ) != 0, 0 ))       \
-	{                                              \
-		action;                                    \
-		goto label;                                \
-	}                                              \
-}                                                  \
+#define require_action_quiet( assertation, label, action ) \
+do                                                         \
+{                                                          \
+	if ( __builtin_expect( !( assertation ), 0 ))          \
+	{                                                      \
+		action;                                            \
+		goto label;                                        \
+	}                                                      \
+}                                                          \
 while ( 0 )
 #else
 #define require_action_quiet( err, label, action ) //TODO
