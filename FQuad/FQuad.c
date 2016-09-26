@@ -34,6 +34,15 @@ int main(void)
 	
 	status = PlatformPWM_Init( FQuadPWM_MotorNW, 250, NULL );
 	require_noerr_quiet( status, exit );
+				
+	status = PlatformPWM_Init( FQuadPWM_MotorNE, 250, NULL );
+	require_noerr_quiet( status, exit );
+	
+	status = PlatformPWM_Init( FQuadPWM_MotorSW, 250, NULL );
+	require_noerr_quiet( status, exit );
+	
+	status = PlatformPWM_Init( FQuadPWM_MotorSE, 250, NULL );
+	require_noerr_quiet( status, exit );
 	
     while(1)
     {	
@@ -64,7 +73,20 @@ int main(void)
 		require_noerr_quiet( status, exit );
 		
 		// Test PWM output
-		status = PlatformPWM_Start( FQuadPWM_MotorNW, 0.3 );
+			
+		status = PlatformPWM_Start( FQuadPWM_MotorNW, 40 );
+		FQUAD_DEBUG_LOG(( "PWM Status: %d\n", status ));
+		require_noerr_quiet( status, exit );
+		
+		status = PlatformPWM_Start( FQuadPWM_MotorNE, 60 );
+		FQUAD_DEBUG_LOG(( "PWM Status: %d\n", status ));
+		require_noerr_quiet( status, exit );
+		
+		status = PlatformPWM_Start( FQuadPWM_MotorSW, 20 );
+		FQUAD_DEBUG_LOG(( "PWM Status: %d\n", status ));
+		require_noerr_quiet( status, exit );
+				
+		status = PlatformPWM_Start( FQuadPWM_MotorSE, 80 );
 		FQUAD_DEBUG_LOG(( "PWM Status: %d\n", status ));
 		require_noerr_quiet( status, exit );
 		

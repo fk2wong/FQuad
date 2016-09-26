@@ -22,10 +22,6 @@
 
 #define PLATFORM_PWM_TIMER_MAX_VALUE ( 0xFF )
 #define PLATFORM_PWM_DUTY_CYCLE_MAX  ( 100.0f )
-#define PLATFORM_PWM_DUTY_CYCLE_RESOLUTION ( PLATFORM_PWM_DUTY_CYCLE_MAX / ( PLATFORM_PWM_TIMER_MAX_VALUE + 1 ))
-
-#define PLATFORM_PWM_GET_16_BIT_COMPARE_VALUE_FROM_DUTY_CYCLE( X ) ( uint16_t )(((( float )( PLATFORM_PWM_TIMER_MAX_VALUE + 1 ) * ( X )) / PLATFORM_PWM_DUTY_CYCLE_MAX ) + 0.5f )
-#define PLATFORM_PWM_GET_COMPARE_VALUE_FROM_DUTY_CYCLE( X ) ( uint8_t )( PLATFORM_PWM_GET_16_BIT_COMPARE_VALUE_FROM_DUTY_CYCLE( X ) < ( PLATFORM_PWM_TIMER_MAX_VALUE + 1 ) ? PLATFORM_PWM_GET_16_BIT_COMPARE_VALUE_FROM_DUTY_CYCLE( X ) : PLATFORM_PWM_TIMER_MAX_VALUE )
 
 #define IS_PWM_OUTPUT_CHANNEL_A( PWM ) ((( PWM ) % 2 ) == 0 )
 
@@ -41,6 +37,7 @@ typedef struct
 typedef struct 
 {
 	uint8_t                       initCount;
+	uint32_t                      frequency;
 	PlatformPWMTimerRegBase_t    *regBase;
 	PlatformPowerSavePeripheral_t powerSavePeripheral;
 	PlatformGPIO_t                outputA;
@@ -72,7 +69,8 @@ static uint8_t mInitializedPWMChannels;
 
 static PlatformStatus _PlatformPWM_DisconnectOutput( const PlatformPWM_t inPWM, const PlatformPWMTimerStruct_t* const inPWMTimer );
 static PlatformPWMTimerStruct_t * _PlatformPWM_GetPWMTimerStruct( const PlatformPWM_t inPWM );
-static uint8_t _PlatformPWM_GetPWMTimerPrescalerBitsAndFrequency( const uint32_t inRequestedPWMFrequency, uint32_t *const outActualPWMFrequency );
+static void _PlatformPWM_GetPWMTimerPrescalerBitsAndFrequency( const uint32_t inRequestedPWMFrequency, uint32_t *const outActualPWMFrequency, uint8_t *const outPrescalerBits );
+static uint8_t _PlatformPWM_GetCompareRegValueFromDutyCycle( const float inDutyCycle );
 
 PlatformStatus PlatformPWM_Init( const PlatformPWM_t inPWM, const uint32_t inRequestedPWMFrequency, uint32_t *const outActualPWMFrequency )
 {
@@ -92,22 +90,42 @@ PlatformStatus PlatformPWM_Init( const PlatformPWM_t inPWM, const uint32_t inReq
 	// Initialize the timer if it hasn't already been initialized
 	if ( pwmTimer->initCount == 0 )
 	{	
+		uint32_t actualFrequency;
+		
 		// Disable Powersave on this timer
 		status = PlatformPowerSave_PowerOnPeripheral( pwmTimer->powerSavePeripheral );
 		require_noerr_quiet( status, exit );
 		
-		// Set the prescaler bits that best match the requested PWM frequency
-		timerPrescalerBits = _PlatformPWM_GetPWMTimerPrescalerBitsAndFrequency( inRequestedPWMFrequency, outActualPWMFrequency );
-		require_action_quiet( timerPrescalerBits, exit, status = PlatformStatus_Failed );
+		// Get the prescaler bits that best match the requested PWM frequency
+		_PlatformPWM_GetPWMTimerPrescalerBitsAndFrequency( inRequestedPWMFrequency, &actualFrequency, &timerPrescalerBits );
+		require_action_quiet( timerPrescalerBits != 0, exit, status = PlatformStatus_Failed );
 		
+		// Set the prescaler bits
 		pwmTimer->regBase->TCCRXB = timerPrescalerBits;
+		
+		// Save the frequency internally
+		pwmTimer->frequency = actualFrequency;
+		
+		// Return the actual frequency, if desired
+		if ( outActualPWMFrequency )
+		{
+			*outActualPWMFrequency = actualFrequency;
+		}
 		
 		FQUAD_DEBUG_LOG(( "PWM Prescaler: %d\n", timerPrescalerBits ));
 		
 		// Set the timer to use Fast PWM
 		pwmTimer->regBase->TCCRXA |= ( 1 << WGM01 ) | ( 1 << WGM00 );
 	}
-	
+	else
+	{
+		uint32_t newApproxFreq;
+		
+		// If this timer is already init, check that the requested frequency (after best-match approximation) matches the current frequency
+		_PlatformPWM_GetPWMTimerPrescalerBitsAndFrequency( inRequestedPWMFrequency, &newApproxFreq, NULL );
+		
+		require_action_quiet( pwmTimer->frequency == newApproxFreq, exit, status = PlatformStatus_Failed );
+	}
 	// Nothing to do for OCRXA/B, these will be set in PlatformPWM_Start()
 	
 	// Increment this timer's init count
@@ -133,7 +151,7 @@ PlatformStatus PlatformPWM_Deinit( const PlatformPWM_t inPWM )
 	PlatformPWMTimerStruct_t *pwmTimer;
 		
 	// Check that this PWM has been initialized
-	require_action_quiet(( mInitializedPWMChannels & ( 1 << inPWM )) == 0, exit, status = PlatformStatus_NotInitialized );
+	require_action_quiet( mInitializedPWMChannels & ( 1 << inPWM ), exit, status = PlatformStatus_NotInitialized );
 		
 	// Get this PWM's timer struct
 	pwmTimer = _PlatformPWM_GetPWMTimerStruct( inPWM );
@@ -187,7 +205,7 @@ PlatformStatus PlatformPWM_Start( const PlatformPWM_t inPWM, const float inDutyC
 	require_quiet( pwmTimer->initCount > 0, exit );
 	
 	// Get the Compare Register value that produces this duty cycle
-	compareRegValue = PLATFORM_PWM_GET_COMPARE_VALUE_FROM_DUTY_CYCLE( inDutyCycle );
+	compareRegValue = _PlatformPWM_GetCompareRegValueFromDutyCycle( inDutyCycle );
 	
 	FQUAD_DEBUG_LOG(("Compare Value: %d\n", compareRegValue ));
 	
@@ -218,13 +236,13 @@ PlatformStatus PlatformPWM_Start( const PlatformPWM_t inPWM, const float inDutyC
 		// If the compare value is 0, then just disable the PWM output.
 		if ( compareRegValue == 0 )
 		{
-			pwmTimer->regBase->TCCRXB &= ~(( 1 << COM0B1 ) | ( 1 << COM0B0 ));
+			pwmTimer->regBase->TCCRXA &= ~(( 1 << COM0B1 ) | ( 1 << COM0B0 ));
 		}
 		// Otherwise set the compare register value and enable non-inverting PWM
 		else
 		{
 			pwmTimer->regBase->OCRXB   = compareRegValue;
-			pwmTimer->regBase->TCCRXB |= ( 1 << COM0B1 );
+			pwmTimer->regBase->TCCRXA |= ( 1 << COM0B1 );
 		}
 	}
 	
@@ -268,7 +286,7 @@ static PlatformStatus _PlatformPWM_DisconnectOutput( const PlatformPWM_t inPWM, 
 	else
 	{
 		// Disable the PWM output
-		inPWMTimer->regBase->TCCRXB &= ~(( 1 << COM0B1 ) | ( 1 << COM0B0 ));
+		inPWMTimer->regBase->TCCRXA &= ~(( 1 << COM0B1 ) | ( 1 << COM0B0 ));
 	}
 	
 	status = PlatformStatus_Success;
@@ -304,7 +322,7 @@ static PlatformPWMTimerStruct_t * _PlatformPWM_GetPWMTimerStruct( const Platform
 	return pwmTimerStruct;
 }
 
-static uint8_t _PlatformPWM_GetPWMTimerPrescalerBitsAndFrequency( const uint32_t inRequestedPWMFrequency, uint32_t *const outActualPWMFrequency )
+static void _PlatformPWM_GetPWMTimerPrescalerBitsAndFrequency( const uint32_t inRequestedPWMFrequency, uint32_t *const outActualPWMFrequency, uint8_t *const outPrescalerBits )
 {
 	uint8_t prescalerBits = 0;
 	uint32_t currentFreq;
@@ -343,5 +361,24 @@ static uint8_t _PlatformPWM_GetPWMTimerPrescalerBitsAndFrequency( const uint32_t
 		}
 	}
 	
-	return prescalerBits;
+	if ( outPrescalerBits )
+	{
+		*outPrescalerBits = prescalerBits;	
+	}
+}
+
+static uint8_t _PlatformPWM_GetCompareRegValueFromDutyCycle( const float inDutyCycle )
+{
+	int16_t tempRegisterValue;
+	
+	// The compare register value is determined by the following formula, plus the 0.5f to round from float to int
+	tempRegisterValue = ((( PLATFORM_PWM_TIMER_MAX_VALUE + 1 ) * inDutyCycle ) / PLATFORM_PWM_DUTY_CYCLE_MAX ) - 1 + 0.5f;
+	
+	// Make sure the value is positive
+	tempRegisterValue = ( tempRegisterValue < 0 ) ? 0 : tempRegisterValue;
+	
+	// Make sure the value is below the PLATFORM_PWM_TIMER_MAX_VALUE
+	tempRegisterValue = ( tempRegisterValue > PLATFORM_PWM_TIMER_MAX_VALUE ) ? PLATFORM_PWM_TIMER_MAX_VALUE : tempRegisterValue;
+	
+	return ( uint8_t )tempRegisterValue;
 }
