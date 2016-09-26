@@ -14,8 +14,6 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-#include "FQuadLogging.h" //TEMP remove
-
 #define PLATFORM_PWM_NUM_TIMERS      ( 2 )
 #define PLATFORM_PWM_TIMER0_REG_BASE ( 0x44 )
 #define PLATFORM_PWM_TIMER2_REG_BASE ( 0xB0 )
@@ -112,8 +110,6 @@ PlatformStatus PlatformPWM_Init( const PlatformPWM_t inPWM, const uint32_t inReq
 			*outActualPWMFrequency = actualFrequency;
 		}
 		
-		FQUAD_DEBUG_LOG(( "PWM Prescaler: %d\n", timerPrescalerBits ));
-		
 		// Set the timer to use Fast PWM
 		pwmTimer->regBase->TCCRXA |= ( 1 << WGM01 ) | ( 1 << WGM00 );
 	}
@@ -133,12 +129,6 @@ PlatformStatus PlatformPWM_Init( const PlatformPWM_t inPWM, const uint32_t inReq
 	
 	// Mark this PWM as initialized
 	mInitializedPWMChannels |= ( 1 << inPWM );
-	
-	FQUAD_DEBUG_LOG(("Registers: %d, %d, %d, %d, %d\n", &pwmTimer->regBase->TCCRXA, &pwmTimer->regBase->TCCRXB, &pwmTimer->regBase->TCNTX, 
-	&pwmTimer->regBase->OCRXA, &pwmTimer->regBase->OCRXB ));
-	
-	FQUAD_DEBUG_LOG(("Registers: %d, %d, %d, %d, %d\n", pwmTimer->regBase->TCCRXA, pwmTimer->regBase->TCCRXB, pwmTimer->regBase->TCNTX,
-	pwmTimer->regBase->OCRXA, pwmTimer->regBase->OCRXB ));
 
 	status = PlatformStatus_Success;
 exit:
@@ -200,14 +190,11 @@ PlatformStatus PlatformPWM_Start( const PlatformPWM_t inPWM, const float inDutyC
 	pwmTimer = _PlatformPWM_GetPWMTimerStruct( inPWM );
 	require_quiet( pwmTimer, exit );
 	
-	FQUAD_DEBUG_LOG(( "Init count: %d\n", pwmTimer->initCount ));
 	// Sanity check that this timer has been init
 	require_quiet( pwmTimer->initCount > 0, exit );
 	
 	// Get the Compare Register value that produces this duty cycle
 	compareRegValue = _PlatformPWM_GetCompareRegValueFromDutyCycle( inDutyCycle );
-	
-	FQUAD_DEBUG_LOG(("Compare Value: %d\n", compareRegValue ));
 	
 	if ( IS_PWM_OUTPUT_CHANNEL_A( inPWM ))
 	{
@@ -333,18 +320,14 @@ static void _PlatformPWM_GetPWMTimerPrescalerBitsAndFrequency( const uint32_t in
 		currentFreq = F_CPU / kPlatformPWMTimerPrescalers[i] / ( PLATFORM_PWM_TIMER_MAX_VALUE + 1 );   // From ATmega328p datasheet, section 14.7.3
 		nextFreq    = F_CPU / kPlatformPWMTimerPrescalers[i+1] / ( PLATFORM_PWM_TIMER_MAX_VALUE + 1 );
 		
-		FQUAD_DEBUG_LOG(( "Current: %lu, Next: %lu, Req: %lu\n", currentFreq, nextFreq, inRequestedPWMFrequency ));
-		
 		// If the requested frequency is closer to the current frequency than the next frequency, use this prescaler value.
 		if ( labs( inRequestedPWMFrequency - currentFreq ) <= labs( inRequestedPWMFrequency - nextFreq ))
 		{
-			FQUAD_DEBUG_LOG(("Match!\n"));
 			prescalerBits = kPlatformPWMTimerPrescaleBits[i];
 			
 			if ( outActualPWMFrequency )
 			{
 				*outActualPWMFrequency = currentFreq;
-				FQUAD_DEBUG_LOG(("PWM Actual Freq: %lu\n", *outActualPWMFrequency ));
 			}
 			break;
 		}
