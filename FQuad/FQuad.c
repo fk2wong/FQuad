@@ -32,6 +32,18 @@ int main(void)
 	status = PlatformUART_Init( 19200, ringBuf );
 	require_noerr_quiet( status, exit );
 	
+	status = PlatformPWM_Init( FQuadPWM_MotorNW, 250, NULL );
+	require_noerr_quiet( status, exit );
+	
+	status = PlatformPWM_Init( FQuadPWM_MotorNE, 250, NULL );
+	require_noerr_quiet( status, exit );
+	
+	status = PlatformPWM_Init( FQuadPWM_MotorSW, 250, NULL );
+	require_noerr_quiet( status, exit );
+	
+	status = PlatformPWM_Init( FQuadPWM_MotorSE, 250, NULL );
+	require_noerr_quiet( status, exit );
+		
     while(1)
     {	
 		// Test GPIO
@@ -59,8 +71,22 @@ int main(void)
 		
 		status = PlatformADC_Deinit( FQuadADC_PadLeftVertical );
 		require_noerr_quiet( status, exit );
+		
+		// Test PWM outputs
+		status = PlatformPWM_Start( FQuadPWM_MotorNW, 40 );
+		require_noerr_quiet( status, exit );
+		
+		status = PlatformPWM_Start( FQuadPWM_MotorNE, 60 );
+		require_noerr_quiet( status, exit );
+		
+		status = PlatformPWM_Start( FQuadPWM_MotorSW, 20 );
+		require_noerr_quiet( status, exit );
 				
+		status = PlatformPWM_Start( FQuadPWM_MotorSE, 80 );
+		require_noerr_quiet( status, exit );
+		
 		_delay_ms( 500 );
+		
     }
 exit:
 	while ( 1 )
