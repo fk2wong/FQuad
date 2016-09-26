@@ -72,9 +72,9 @@ static uint8_t mInitializedPWMChannels;
 
 static PlatformStatus _PlatformPWM_DisconnectOutput( const PlatformPWM_t inPWM, const PlatformPWMTimerStruct_t* const inPWMTimer );
 static PlatformPWMTimerStruct_t * _PlatformPWM_GetPWMTimerStruct( const PlatformPWM_t inPWM );
-static uint8_t _PlatformPWM_GetPWMTimerPrescalerBits( const uint32_t inRequestedPWMFrequency );
+static uint8_t _PlatformPWM_GetPWMTimerPrescalerBitsAndFrequency( const uint32_t inRequestedPWMFrequency, uint32_t *const outActualPWMFrequency );
 
-PlatformStatus PlatformPWM_Init( const PlatformPWM_t inPWM, const uint32_t inRequestedPWMFrequency )
+PlatformStatus PlatformPWM_Init( const PlatformPWM_t inPWM, const uint32_t inRequestedPWMFrequency, uint32_t *const outActualPWMFrequency )
 {
 	PlatformStatus status = PlatformStatus_Failed;
 	PlatformPWMTimerStruct_t *pwmTimer;
@@ -97,7 +97,7 @@ PlatformStatus PlatformPWM_Init( const PlatformPWM_t inPWM, const uint32_t inReq
 		require_noerr_quiet( status, exit );
 		
 		// Set the prescaler bits that best match the requested PWM frequency
-		timerPrescalerBits = _PlatformPWM_GetPWMTimerPrescalerBits( inRequestedPWMFrequency );
+		timerPrescalerBits = _PlatformPWM_GetPWMTimerPrescalerBitsAndFrequency( inRequestedPWMFrequency, outActualPWMFrequency );
 		require_action_quiet( timerPrescalerBits, exit, status = PlatformStatus_Failed );
 		
 		pwmTimer->regBase->TCCRXB = timerPrescalerBits;
@@ -304,7 +304,7 @@ static PlatformPWMTimerStruct_t * _PlatformPWM_GetPWMTimerStruct( const Platform
 	return pwmTimerStruct;
 }
 
-static uint8_t _PlatformPWM_GetPWMTimerPrescalerBits( const uint32_t inRequestedPWMFrequency )
+static uint8_t _PlatformPWM_GetPWMTimerPrescalerBitsAndFrequency( const uint32_t inRequestedPWMFrequency, uint32_t *const outActualPWMFrequency )
 {
 	uint8_t prescalerBits = 0;
 	uint32_t currentFreq;
@@ -322,13 +322,25 @@ static uint8_t _PlatformPWM_GetPWMTimerPrescalerBits( const uint32_t inRequested
 		{
 			FQUAD_DEBUG_LOG(("Match!\n"));
 			prescalerBits = kPlatformPWMTimerPrescaleBits[i];
+			
+			if ( outActualPWMFrequency )
+			{
+				*outActualPWMFrequency = currentFreq;
+				FQUAD_DEBUG_LOG(("PWM Actual Freq: %lu\n", *outActualPWMFrequency ));
+			}
 			break;
 		}
 	}
 	// If no prescaler value was found, then the requested frequency is too low; set it to the max prescaler.
 	if ( prescalerBits == 0 )
 	{
-		prescalerBits = kPlatformPWMTimerPrescaleBits[ sizeof( kPlatformPWMTimerPrescaleBits ) / sizeof( uint8_t ) - 1 ];
+		uint8_t lastIndex = sizeof( kPlatformPWMTimerPrescaleBits ) / sizeof( uint8_t ) - 1;
+		prescalerBits = kPlatformPWMTimerPrescaleBits[ lastIndex ];
+		
+		if ( outActualPWMFrequency )
+		{
+			*outActualPWMFrequency = F_CPU / kPlatformPWMTimerPrescalers[ lastIndex ] / ( PLATFORM_PWM_TIMER_MAX_VALUE + 1 );
+		}
 	}
 	
 	return prescalerBits;

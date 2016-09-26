@@ -32,7 +32,7 @@ int main(void)
 	status = PlatformUART_Init( 19200, ringBuf );
 	require_noerr_quiet( status, exit );
 	
-	status = PlatformPWM_Init( FQuadPWM_MotorNW, 250 );
+	status = PlatformPWM_Init( FQuadPWM_MotorNW, 250, NULL );
 	require_noerr_quiet( status, exit );
 	
     while(1)
