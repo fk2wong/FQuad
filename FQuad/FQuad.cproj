@@ -98,6 +98,7 @@
       <Value>../FQuad_Libs</Value>
       <Value>../FQuad_Libs/FQuadLogging</Value>
       <Value>../Platform/PlatformPWM</Value>
+      <Value>../Platform/PlatformI2C</Value>
     </ListValues>
   </avrgcc.compiler.directories.IncludePaths>
   <avrgcc.compiler.optimization.level>Optimize (-O1)</avrgcc.compiler.optimization.level>
@@ -134,6 +135,12 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="Platform\PlatformGPIO\PlatformGPIO.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Platform\PlatformI2C\PlatformI2C.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Platform\PlatformI2C\PlatformI2C.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="Platform\PlatformInterrupt\PlatformInterrupt.h">
@@ -185,6 +192,7 @@
   <ItemGroup>
     <Folder Include="FQuad_Libs" />
     <Folder Include="FQuad_Libs\FQuadLogging" />
+    <Folder Include="Platform\PlatformI2C" />
     <Folder Include="Platform\PlatformPWM" />
     <Folder Include="Platform\PlatformADC" />
     <Folder Include="Platform\PlatformClock" />
