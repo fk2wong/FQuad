@@ -10,10 +10,14 @@
 #define PLATFORMI2C_H_
 
 #include "PlatformStatus.h"
+#include <stdint.h>
+#include <stddef.h>
 
 PlatformStatus PlatformI2C_Init( void );
 
 PlatformStatus PlatformI2C_Write( const uint8_t inDeviceAddr, const uint8_t inRegisterAddress, const uint8_t *const inData, const size_t inDataLen );
+
+PlatformStatus PlatformI2C_Read( const uint8_t inDeviceAddr, const uint8_t inRegisterAddress, uint8_t *const outData, const size_t inDataLen );
 
 PlatformStatus PlatformI2C_Deinit( void );
 
