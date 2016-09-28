@@ -16,9 +16,25 @@
 #include <stdbool.h>
 
 #define PLATFORM_I2C_FAST_MODE_HZ ( 400000 )
+#define PLATFORM_I2C_WRITE_BIT    ( 0 )
+#define PLATFORM_I2C_READ_BIT     ( 1 )
 
 #define PLATFORM_I2C_TWBR_MAX     ( 0xFF )
 #define PLATFORM_I2C_TWBR_MIN     ( 0x00 )
+
+#define GET_TWSR_STATUS_CODE() ( TWSR & (( 1 << TWS7 ) | ( 1 << TWS6 ) | ( 1 << TWS5 ) | ( 1 << TWS4 ) | ( 1 << TWS3 ))
+
+enum TWSRStatus
+{
+	TWSRStatus_StartConditionTransmitted         = 0x08,
+	TWSRStatus_RepeatedStartConditionTransmitted = 0x10,
+	TWSRStatus_SLAW_ACKReceived                  = 0x18,
+	TWSRStatus_SLAW_NACKReceived                 = 0x20,
+	TWSRStatus_DataACKReceived                   = 0x28,
+	TWSRStatus_DataNACKReceived                  = 0x30,
+	TWSRStatus_ArbitrationLost                   = 0x38,
+		
+};
 
 static const uint8_t kPlatformI2CBitRatePrescalers[] = { 1, 4, 16, 64 };
 	
@@ -51,6 +67,64 @@ PlatformStatus PlatformI2C_Init( void )
 	//FQUAD_DEBUG_LOG(( "TWSR: %d, TWBR: %d, TWCR: %d\n", TWSR, TWBR, TWCR ));
 	
 	exit:
+	return status;
+}
+
+PlatformStatus PlatformI2C_Write( const uint8_t inDeviceAddr, const uint8_t inRegisterAddress, const uint8_t *const inData, const size_t inDataLen )
+{
+	PlatformStatus status = PlatformStatus_Failed;
+	bool startConditionSent = false;
+	
+	require_quiet( inData,    exit );
+	require_quiet( inDataLen, exit );
+	
+	// Sanity check that there is no current I2C action in progress, and that the write collision bit is cleared
+	require_quiet( !( TWCR & ( 1 << TWINT )), exit );
+	require_quiet( !( TWCR & ( 1 << TWWC )),  exit );
+	
+	// Send Start Condition // TODO does this need to be on different clock cycles?
+	TWCR |= ( 1 << TWSTA ) | ( 1 << TWINT );
+	
+	// Wait for interrupt flag, indicating the start condition was sent
+	while ( !( TWCR & ( 1 << TWINT )));
+	
+	// Check the status of the start condition
+	require_quiet( GET_TWSR_STATUS_CODE() = TWSRStatus_StartConditionTransmitted, exit );
+	
+	// Set the device address and write bit (SLA+W)
+	TWDR = ( inDeviceAddr << 1 ) | PLATFORM_I2C_WRITE_BIT;
+	
+	// Clear the Start Condition and write the interrupt flag in order to send SLA+W
+	TWCR = ( TWCR & ~( 1 << TWSTA )) | ( 1 << TWINT );
+	
+	// Wait for interrupt flag, indicating SLA+W was sent
+	while ( !( TWCR & ( 1 << TWINT )));
+	
+	// Check if ACK was received
+	require_quiet( GET_TWSR_STATUS_CODE() = TWSRStatus_SLAW_ACKReceived, exit );
+	
+	// Send each byte of data
+	for ( size_t i = 0; i < inDataLen, i++ )
+	{
+		// Set the data into the data register
+		TWDR = inData[0];
+		
+		// Set the interrupt flag to send the data
+		TWCR |= ( 1 << TWSTA );
+		
+		// Check if ACK was received
+		require_quiet( GET_TWSR_STATUS_CODE() = TWSRStatus_DataACKReceived, exit );
+	}
+	
+	status = PlatformStatus_Success;
+	
+exit:
+	if ( startConditionSent )
+	{
+		// Clear start condition, write stop condition, set interrupt flag to send stop condition
+		TWCR = ( TWCR & ~( 1 << TWSTA )) | ( 1 << TWSTO ) | ( 1 << TWINT );
+	}
+	
 	return status;
 }
 

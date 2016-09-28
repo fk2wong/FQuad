@@ -13,6 +13,8 @@
 
 PlatformStatus PlatformI2C_Init( void );
 
+PlatformStatus PlatformI2C_Write( const uint8_t inDeviceAddr, const uint8_t inRegisterAddress, const uint8_t *const inData, const size_t inDataLen );
+
 PlatformStatus PlatformI2C_Deinit( void );
 
 #endif /* PLATFORMI2C_H_ */
