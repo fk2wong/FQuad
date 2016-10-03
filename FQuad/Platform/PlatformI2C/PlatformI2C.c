@@ -43,12 +43,12 @@ enum TWSRStatus
 static const uint8_t kPlatformI2CBitRatePrescalers[] = { 1, 4, 16, 64 };
 
 
-static PlatformStatus        _PlatformI2C_ReadByte( uint8_t *const outDataByte );
+static PlatformStatus _PlatformI2C_ReadByte( uint8_t *const outDataByte, const bool isLastByteToRead );
 static PlatformStatus        _PlatformI2C_WriteByte( const uint8_t inDataByte );
 static inline PlatformStatus _PlatformI2C_SendRegisterAddress( const uint8_t inRegisterAddress );
 static PlatformStatus        _PlatformI2C_SendSlaveAddressAndReadWriteBit( const uint8_t inDeviceAddr, const bool inReadWriteBit );
 static void                  _PlatformI2C_SendStopCondition( void );
-static PlatformStatus        _PlatformI2C_SendStartCondition( void );
+static PlatformStatus        _PlatformI2C_SendStartCondition( const bool isRepeatedStart );
 static PlatformStatus        _PlatformI2C_GetClockPrescalerBitsAndBitRateValues( uint32_t inCPUFreq, uint8_t *const outPrescalerBits, uint8_t *const outBitRateVal );
 
 PlatformStatus PlatformI2C_Init( void )
@@ -75,10 +75,13 @@ PlatformStatus PlatformI2C_Init( void )
 	// Enable the I2C peripheral
 	TWCR = ( 1 << TWEN );
 	
-	//FQUAD_DEBUG_LOG(( "TWSR: %d, TWBR: %d, TWCR: %d\n", TWSR, TWBR, TWCR ));
-	
-	exit:
+exit:
 	return status;
+}
+
+PlatformStatus PlatformI2C_WriteByte( const uint8_t inDeviceAddr, const uint8_t inRegisterAddress, const uint8_t inDataByte )
+{
+	return PlatformI2C_Write( inDeviceAddr, inRegisterAddress, &inDataByte, 1 );
 }
 
 PlatformStatus PlatformI2C_Write( const uint8_t inDeviceAddr, const uint8_t inRegisterAddress, const uint8_t *const inData, const size_t inDataLen )
@@ -93,7 +96,7 @@ PlatformStatus PlatformI2C_Write( const uint8_t inDeviceAddr, const uint8_t inRe
 	require_quiet( !( TWCR & ( 1 << TWINT )), exit );
 	require_quiet( !( TWCR & ( 1 << TWWC )),  exit );
 	
-	status = _PlatformI2C_SendStartCondition();
+	status = _PlatformI2C_SendStartCondition( false );
 	require_noerr_quiet( status, exit );
 	startConditionSent = true;
 	
@@ -105,7 +108,7 @@ PlatformStatus PlatformI2C_Write( const uint8_t inDeviceAddr, const uint8_t inRe
 	
 	// Send each byte of data
 	for ( size_t i = 0; i < inDataLen; i++ )
-	{
+	{	
 		_PlatformI2C_WriteByte( inData[i] );
 		require_noerr_quiet( status, exit );
 	}
@@ -131,8 +134,8 @@ PlatformStatus PlatformI2C_Read( const uint8_t inDeviceAddr, const uint8_t inReg
 	// Sanity check that there is no current I2C action in progress, and that the write collision bit is cleared
 	require_quiet( !( TWCR & ( 1 << TWINT )), exit );
 	require_quiet( !( TWCR & ( 1 << TWWC )),  exit );
-		
-	status = _PlatformI2C_SendStartCondition();
+	
+	status = _PlatformI2C_SendStartCondition( false );
 	require_noerr_quiet( status, exit );
 	startConditionSent = true;
 	
@@ -143,7 +146,7 @@ PlatformStatus PlatformI2C_Read( const uint8_t inDeviceAddr, const uint8_t inReg
 	require_noerr_quiet( status, exit );
 	
 	// Send Repeated Start Condition 
-	status = _PlatformI2C_SendStartCondition();
+	status = _PlatformI2C_SendStartCondition( true );
 	require_noerr_quiet( status, exit );
 	
 	status = _PlatformI2C_SendSlaveAddressAndReadWriteBit( inDeviceAddr, PLATFORM_I2C_READ_BIT );
@@ -152,7 +155,9 @@ PlatformStatus PlatformI2C_Read( const uint8_t inDeviceAddr, const uint8_t inReg
 	// Read each byte
 	for ( size_t i = 0; i < inDataLen; i++ )
 	{
-		status = _PlatformI2C_ReadByte( &outData[i] );
+		bool isLastByte = ( i == ( inDataLen - 1 )) ? true : false;
+		
+		status = _PlatformI2C_ReadByte( &outData[i], isLastByte );
 		require_noerr_quiet( status, exit );
 	}
 	
@@ -166,7 +171,7 @@ exit:
 	return status;
 }
 
-static PlatformStatus _PlatformI2C_SendStartCondition( void )
+static PlatformStatus _PlatformI2C_SendStartCondition( const bool isRepeatedStart )
 {
 	PlatformStatus status = PlatformStatus_Failed;
 		
@@ -177,7 +182,14 @@ static PlatformStatus _PlatformI2C_SendStartCondition( void )
 	while ( !( TWCR & ( 1 << TWINT )));
 		
 	// Check the status of the start condition
-	require_quiet( GET_TWSR_STATUS_CODE() == TWSRStatus_StartConditionTransmitted, exit );
+	if ( isRepeatedStart )
+	{
+		require_quiet( GET_TWSR_STATUS_CODE() == TWSRStatus_RepeatedStartConditionTransmitted, exit );	
+	}
+	else
+	{
+		require_quiet( GET_TWSR_STATUS_CODE() == TWSRStatus_StartConditionTransmitted, exit );
+	}
 	
 	status = PlatformStatus_Success;
 exit:
@@ -186,8 +198,8 @@ exit:
 
 static void _PlatformI2C_SendStopCondition( void )
 {
-	// Clear start condition, write stop condition, set interrupt flag to send stop condition
-	TWCR = ( TWCR & ~( 1 << TWSTA )) | ( 1 << TWSTO ) | ( 1 << TWINT );
+	// Clear start condition, disable ACK, write stop condition, set interrupt flag to send stop condition
+	TWCR = ( TWCR & ~(( 1 << TWSTA ) | ( 1 << TWEA ))) | ( 1 << TWSTO ) | ( 1 << TWINT );
 }
 
 static PlatformStatus _PlatformI2C_SendSlaveAddressAndReadWriteBit( const uint8_t inDeviceAddr, const bool inReadWriteBit )
@@ -244,20 +256,37 @@ exit:
 	return status;
 }
 
-static PlatformStatus _PlatformI2C_ReadByte( uint8_t *const outDataByte )
+static PlatformStatus _PlatformI2C_ReadByte( uint8_t *const outDataByte, const bool isLastByteToRead )
 {
 	PlatformStatus status = PlatformStatus_Failed;
 		
 	require_quiet( outDataByte, exit );
+	
+	// If this is the last byte to read, set up the TWCR to send a NACK; otherwise send an ACK
+	if ( isLastByteToRead )
+	{
+		TWCR &= ~( 1 << TWEA );
+	}
+	else
+	{
+		TWCR |= ( 1 << TWEA );	
+	}
 		
-	// Clear any start/stop condition, enable ACK, and write the interrupt flag in order to receive data
-	TWCR = ( TWCR & ~(( 1 << TWSTA ) | ( 1 << TWSTO ))) | ( 1 << TWINT ) | ( 1 << TWEA );
+	// Clear any start/stop condition and write the interrupt flag in order to receive data
+	TWCR = ( TWCR & ~(( 1 << TWSTA ) | ( 1 << TWSTO ))) | ( 1 << TWINT );
 		
 	// Wait for interrupt flag, indicating the data was sent
 	while ( !( TWCR & ( 1 << TWINT )));
 		
 	// Check if data was received successfully
-	require_quiet( GET_TWSR_STATUS_CODE() == TWSRStatus_DataReceivedAndACKSent, exit );
+	if ( isLastByteToRead )
+	{
+		require_quiet( GET_TWSR_STATUS_CODE() == TWSRStatus_DataReceivedAndNACKSent, exit );
+	}
+	else
+	{
+		require_quiet( GET_TWSR_STATUS_CODE() == TWSRStatus_DataReceivedAndACKSent, exit );
+	}
 	
 	// Get read data
 	*outDataByte = TWDR;
@@ -285,8 +314,6 @@ static PlatformStatus _PlatformI2C_GetClockPrescalerBitsAndBitRateValues( uint32
 		// The below formula is taken from Section 21.5.2 of the ATmega328p datasheet
 		currentPrescalerUpperSpeed = inCPUFreq / ( 16 + ( 2 * PLATFORM_I2C_TWBR_MIN * kPlatformI2CBitRatePrescalers[ prescalerIndex ] ));
 		currentPrescalerLowerSpeed = inCPUFreq / ( 16 + ( 2 * PLATFORM_I2C_TWBR_MAX * kPlatformI2CBitRatePrescalers[ prescalerIndex ] ));
-		
-		//FQUAD_DEBUG_LOG(( "Max Clock: %lu, Min: %lu\n", currentPrescalerUpperSpeed, currentPrescalerLowerSpeed ));
 		
 		// If the current prescaler can accomodate the 400kHz of fast mode, break and use it
 		if (( currentPrescalerUpperSpeed >= PLATFORM_I2C_FAST_MODE_HZ ) || ( PLATFORM_I2C_FAST_MODE_HZ >= currentPrescalerLowerSpeed ))
