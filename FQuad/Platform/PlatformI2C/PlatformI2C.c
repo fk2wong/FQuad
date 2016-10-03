@@ -11,8 +11,6 @@
 #include "PlatformClock.h"
 #include "require_macros.h"
 #include <avr/io.h>
-#include <stddef.h>
-#include <stdint.h>
 #include <stdbool.h>
 
 #define PLATFORM_I2C_FAST_MODE_HZ ( 400000 )
@@ -41,9 +39,9 @@ enum TWSRStatus
 };
 
 static const uint8_t kPlatformI2CBitRatePrescalers[] = { 1, 4, 16, 64 };
+static bool mPlatformI2CIsInitialized;
 
-
-static PlatformStatus _PlatformI2C_ReadByte( uint8_t *const outDataByte, const bool isLastByteToRead );
+static PlatformStatus        _PlatformI2C_ReadByte( uint8_t *const outDataByte, const bool isLastByteToRead );
 static PlatformStatus        _PlatformI2C_WriteByte( const uint8_t inDataByte );
 static inline PlatformStatus _PlatformI2C_SendRegisterAddress( const uint8_t inRegisterAddress );
 static PlatformStatus        _PlatformI2C_SendSlaveAddressAndReadWriteBit( const uint8_t inDeviceAddr, const bool inReadWriteBit );
@@ -57,6 +55,8 @@ PlatformStatus PlatformI2C_Init( void )
 	
 	uint8_t clockPrescalerBits;
 	uint8_t bitRateRegisterValue;
+	
+	require_action_quiet( !mPlatformI2CIsInitialized, exit, status = PlatformStatus_AlreadyInitialized );
 	
 	// Enable Power to the I2C peripheral
 	status = PlatformPowerSave_PowerOnPeripheral( PlatformPowerSavePeripheral_I2C );
@@ -75,6 +75,29 @@ PlatformStatus PlatformI2C_Init( void )
 	// Enable the I2C peripheral
 	TWCR = ( 1 << TWEN );
 	
+	mPlatformI2CIsInitialized = true;
+	
+	status = PlatformStatus_Success;
+exit:
+	return status;
+}
+
+PlatformStatus PlatformI2C_Deinit( void )
+{
+	PlatformStatus status = PlatformStatus_Failed;
+	
+	require_action_quiet( mPlatformI2CIsInitialized, exit, status = PlatformStatus_NotInitialized );
+	
+	// Disable the I2C peripheral
+	TWCR &= ~( 1 << TWEN );
+	
+	// Disable power to the peripheral
+	status = PlatformPowerSave_PowerOffPeripheral( PlatformPowerSavePeripheral_I2C );
+	require_noerr_quiet( status, exit );
+	
+	mPlatformI2CIsInitialized = false;
+	
+	status = PlatformStatus_Success;
 exit:
 	return status;
 }
@@ -91,6 +114,8 @@ PlatformStatus PlatformI2C_Write( const uint8_t inDeviceAddr, const uint8_t inRe
 	
 	require_quiet( inData,    exit );
 	require_quiet( inDataLen, exit );
+	
+	require_action_quiet( mPlatformI2CIsInitialized, exit, status = PlatformStatus_NotInitialized );
 	
 	// Sanity check that there is no current I2C action in progress, and that the write collision bit is cleared
 	require_quiet( !( TWCR & ( 1 << TWINT )), exit );
@@ -130,6 +155,8 @@ PlatformStatus PlatformI2C_Read( const uint8_t inDeviceAddr, const uint8_t inReg
 		
 	require_quiet( outData,   exit );
 	require_quiet( inDataLen, exit );
+	
+	require_action_quiet( mPlatformI2CIsInitialized, exit, status = PlatformStatus_NotInitialized );
 		
 	// Sanity check that there is no current I2C action in progress, and that the write collision bit is cleared
 	require_quiet( !( TWCR & ( 1 << TWINT )), exit );
@@ -332,21 +359,6 @@ static PlatformStatus _PlatformI2C_GetClockPrescalerBitsAndBitRateValues( uint32
 	*outBitRateVal    = (( inCPUFreq / PLATFORM_I2C_FAST_MODE_HZ ) - 16 ) / ( 2 * kPlatformI2CBitRatePrescalers[ prescalerIndex ] );
 	
 	status = PlatformStatus_Success;
-	exit:
-	return status;
-}
-
-PlatformStatus PlatformI2C_Deinit( void )
-{
-	PlatformStatus status = PlatformStatus_Failed;
-	
-	// Disable the I2C peripheral
-	TWCR &= ~( 1 << TWEN );
-	
-	// Disable power to the peripheral
-	status = PlatformPowerSave_PowerOffPeripheral( PlatformPowerSavePeripheral_I2C );
-	require_noerr_quiet( status, exit );
-	
 exit:
 	return status;
 }
