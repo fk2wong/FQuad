@@ -43,6 +43,21 @@ int main(void)
 	
 	status = PlatformPWM_Init( FQuadPWM_MotorSE, 250, NULL );
 	require_noerr_quiet( status, exit );
+	
+	status = PlatformI2C_Init();
+	require_noerr_quiet( status, exit );
+	
+	uint8_t MPUAddr = 0;
+	status = PlatformI2C_Read( 0x68, 0x75, &MPUAddr, 1 );
+	
+	if ( status == 0 )
+	{
+		FQUAD_DEBUG_LOG(( "MPU-6050 ADDR: 0x%x\n", MPUAddr ));
+	}
+	else
+	{
+		FQUAD_DEBUG_LOG(( "MPU-6050 Not Found!\n" ));	
+	}
 		
     while(1)
     {	
