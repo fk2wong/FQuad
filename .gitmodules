@@ -4,3 +4,6 @@
 [submodule "FQuad/Platform"]
 	path = FQuad/Platform
 	url = https://github.com/fk2wong/Platform_ATmega328p.git
+[submodule "FQuad/Shared"]
+	path = FQuad/Shared
+	url = https://github.com/fk2wong/Shared.git
