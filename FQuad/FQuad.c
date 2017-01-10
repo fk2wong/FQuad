@@ -23,7 +23,7 @@ int main(void)
 	status = PlatformPowerSave_PowerOffAllPeripherals();
 	require_noerr_quiet( status, exit );
 	
-	status = PlatformGPIO_InitAllGPIOs();
+	status = PlatformGPIO_Configure( FQuadGPIO_TestLED, PlatformGPIOConfig_Output );
 	require_noerr_quiet( status, exit );
 	
 	ringBuf = PlatformRingBuffer_Create( 32 );
@@ -47,18 +47,18 @@ int main(void)
 	status = PlatformI2C_Init();
 	require_noerr_quiet( status, exit );
 	
-	uint8_t MPUAddr = 0;
-	status = PlatformI2C_Read( 0x68, 0x75, &MPUAddr, 1 );
-	
-	if ( status == 0 )
-	{
-		FQUAD_DEBUG_LOG(( "MPU-6050 ADDR: 0x%x\n", MPUAddr ));
-	}
-	else
-	{
-		FQUAD_DEBUG_LOG(( "MPU-6050 Not Found!\n" ));	
-	}
-		
+// 	uint8_t MPUAddr = 0;
+// 	status = PlatformI2C_Read( 0x68, 0x75, &MPUAddr, 1 );
+// 	
+// 	if ( status == 0 )
+// 	{
+// 		FQUAD_DEBUG_LOG(( "MPU-6050 ADDR: 0x%x\n", MPUAddr ));
+// 	}
+// 	else
+// 	{
+// 		FQUAD_DEBUG_LOG(( "MPU-6050 Not Found!\n" ));	
+// 	}
+// 		
     while(1)
     {	
 		// Test GPIO
